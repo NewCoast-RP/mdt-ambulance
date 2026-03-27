@@ -1,0 +1,158 @@
+* { box-sizing: border-box; }
+body { margin: 0; font-family: "Inter", sans-serif; background: #f4f5f7; color: #111827; transition: background-color 0.3s, color 0.3s; }
+
+.app { display: grid; grid-template-columns: 260px 1fr; min-height: 100vh; }
+.app.logged-out { display: block; }
+.app.logged-out .sidebar, .app.logged-out .topbar { display: none; }
+.app.logged-out .content { width: 100%; height: 100vh; display: flex; align-items: center; justify-content: center; background: #e5e7eb; padding: 0; }
+.app.logged-out .view { padding: 0; display: flex; justify-content: center; align-items: center; width: 100%; }
+
+.login-container { background: white; padding: 40px; border-radius: 16px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); width: 100%; max-width: 400px; text-align: center; }
+.login-container .logo-icon { font-size: 40px; color: #3b82f6; margin-bottom: 20px; display: inline-block; background: #eff6ff; padding: 15px; border-radius: 50%; width: 70px; height: 70px; }
+.login-container h2 { margin: 0 0 5px 0; font-size: 24px; color: #111827; }
+.login-container p { color: #6b7280; font-size: 14px; margin-bottom: 24px; }
+.pwd-wrapper { position: relative; display: flex; align-items: center; width: 100%; }
+.pwd-wrapper input { width: 100%; padding-right: 40px; }
+.pwd-toggle { position: absolute; right: 12px; cursor: pointer; color: #6b7280; font-size: 14px; }
+
+.sidebar { background: #ffffff; border-right: 1px solid #e5e7eb; padding: 20px 14px; display: flex; flex-direction: column; transition: 0.3s; }
+.brand { display: flex; gap: 12px; align-items: center; margin-bottom: 40px; padding: 0 10px; }
+.logo-icon { color: #3b82f6; font-size: 24px; }
+.brand h1 { margin: 0; font-size: 15px; color: #111827; font-weight: 700; }
+.brand p { margin: 2px 0 0; color: #6b7280; font-size: 10px; text-transform: uppercase; letter-spacing: 0.5px; line-height: 1.2; }
+
+#nav { display: grid; gap: 8px; flex-grow: 1; align-content: start; }
+.nav-btn { background: transparent; border: none; color: #4b5563; padding: 16px 20px; border-radius: 8px; text-align: left; cursor: pointer; font-size: 14px; font-weight: 600; display: flex; align-items: center; gap: 16px; transition: all 0.2s; }
+.nav-btn i { width: 20px; text-align: center; font-size: 16px; }
+.nav-btn:hover { background: #f9fafb; color: #111827; }
+.nav-btn.active { background: #e5e7eb; color: #111827; }
+
+.user-profile { display: flex; align-items: center; gap: 12px; padding: 20px 10px 0; border-top: 1px solid #e5e7eb; margin-top: auto; }
+.avatar { width: 40px; height: 40px; background: #e5e7eb; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: #6b7280; font-size: 18px; }
+.user-profile .info strong { display: block; font-size: 14px; color: #111827; }
+.user-profile .info span { font-size: 12px; color: #6b7280; }
+
+.content { padding: 0; display: flex; flex-direction: column; height: 100vh; overflow: hidden; width: 100%; transition: 0.3s; }
+.topbar { background: #ffffff; border-bottom: 1px solid #e5e7eb; padding: 12px 24px; display: flex; justify-content: space-between; align-items: center; transition: 0.3s; }
+.clock { color: #6b7280; font-weight: 500; font-size: 14px; }
+
+.duty-btn { background: #f3f4f6; border: 1px solid #e5e7eb; padding: 8px 16px; border-radius: 999px; cursor: pointer; font-weight: 600; color: #374151; display: flex; align-items: center; gap: 8px; transition: 0.2s; font-size: 13px; }
+.duty-btn.on-duty { background: #dcfce7; border-color: #bbf7d0; color: #166534; }
+
+.view { padding: 30px; flex-grow: 1; overflow-y: auto; }
+.page-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; }
+.page-header h2 { margin: 0; font-size: 24px; color: #111827; font-weight: 700; }
+
+.grid { display: grid; gap: 20px; }
+.grid.two { grid-template-columns: 1fr 1fr; }
+.grid.three { grid-template-columns: repeat(3, 1fr); }
+.grid.sidebar-layout { grid-template-columns: 2fr 1fr; }
+
+.card { background: #ffffff; border: 1px solid #e5e7eb; border-radius: 12px; padding: 24px; box-shadow: 0 1px 2px rgba(0,0,0,0.02); transition: 0.3s; }
+.card h3 { margin: 0 0 20px 0; font-size: 16px; color: #374151; font-weight: 600; }
+.stat-card { padding: 20px 24px; }
+.stat-card h3 { margin: 0 0 10px 0; font-size: 14px; color: #4b5563; font-weight: 600; border: none; padding: 0; }
+.stat-card h2 { margin: 0; font-size: 28px; font-weight: 700; color: #111827; }
+
+table { width: 100%; border-collapse: collapse; }
+th, td { padding: 16px 12px; border-bottom: 1px solid #f3f4f6; text-align: left; font-size: 13px; transition: 0.3s; }
+th { color: #6b7280; font-weight: 600; text-transform: uppercase; font-size: 11px; letter-spacing: 0.5px; border-bottom: 2px solid #f3f4f6; }
+tbody tr:hover { background: #f9fafb; }
+.clickable-row { cursor: pointer; transition: background 0.2s; }
+
+.form { display: grid; gap: 16px; text-align: left; }
+.form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+label { font-size: 13px; font-weight: 600; color: #374151; margin-bottom: 6px; display: block; }
+input, textarea, select { font-family: inherit; border-radius: 8px; border: 1px solid #d1d5db; background: #ffffff; color: #111827; padding: 10px 14px; font-size: 14px; width: 100%; transition: border-color 0.2s, background 0.3s, color 0.3s; }
+input:focus, textarea:focus, select:focus { outline: none; border-color: #3b82f6; box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1); }
+textarea { min-height: 100px; resize: vertical; }
+
+.btn-group { display: flex; gap: 10px; justify-content: flex-end; margin-top: 10px; }
+.btn-group.between { justify-content: space-between; }
+button.btn { padding: 10px 20px; border-radius: 8px; border: none; font-weight: 600; font-size: 13px; cursor: pointer; transition: 0.2s; display: inline-flex; align-items: center; justify-content: center; gap: 8px; }
+button.btn-blue { background: #3b82f6; color: white; }
+button.btn-blue:hover { background: #2563eb; }
+button.btn-red { background: #fee2e2; color: #991b1b; }
+button.btn-red:hover { background: #fecaca; }
+button.btn-light { background: #f3f4f6; color: #374151; }
+button.btn-light:hover { background: #e5e7eb; }
+
+.tag { display: inline-block; padding: 4px 12px; border-radius: 999px; font-size: 12px; font-weight: 600; }
+.tag.red { background: #fee2e2; color: #991b1b; }
+.tag.orange { background: #ffedd5; color: #c2410c; }
+.tag.green { background: #dcfce7; color: #166534; }
+.tag.blue { background: #dbeafe; color: #1e40af; }
+
+.pagination { display: flex; justify-content: space-between; align-items: center; margin-top: 20px; font-size: 13px; color: #6b7280; }
+.pagination-controls { display: flex; gap: 5px; }
+.page-btn { padding: 6px 12px; border: 1px solid #d1d5db; background: #fff; border-radius: 6px; cursor: pointer; }
+.page-btn:hover { background: #f3f4f6; }
+.page-btn[disabled] { opacity: 0.5; cursor: not-allowed; }
+
+.history-widget { background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 8px; padding: 16px; font-size: 13px; transition: 0.3s; }
+.history-widget h4 { margin: 0 0 10px 0; font-size: 14px; color: #111827; }
+.history-item { padding: 10px 0; border-bottom: 1px solid #e5e7eb; }
+.history-item:last-child { border-bottom: none; padding-bottom: 0; }
+
+/* =========================================
+   UI COMPONENT : AUTOCOMPLETE PATIENT
+   ========================================= */
+.autocomplete-wrapper { position: relative; width: 100%; }
+.autocomplete-items { position: absolute; border: 1px solid #d1d5db; border-radius: 8px; background-color: #fff; z-index: 99; top: 100%; left: 0; right: 0; margin-top: 4px; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1); max-height: 250px; overflow-y: auto; display: none; }
+.autocomplete-item { padding: 12px 14px; cursor: pointer; font-size: 14px; color: #111827; border-bottom: 1px solid #f3f4f6; display: flex; flex-direction: column; gap: 2px; }
+.autocomplete-item:last-child { border-bottom: none; }
+.autocomplete-item:hover { background-color: #f3f4f6; }
+.autocomplete-item strong { color: #3b82f6; }
+
+/* =========================================
+   UI COMPONENT : TOAST NOTIFICATIONS
+   ========================================= */
+.toast-container { position: fixed; bottom: 20px; right: 20px; z-index: 9999; display: flex; flex-direction: column; gap: 10px; pointer-events: none; }
+.toast { background: #ffffff; border-left: 4px solid #3b82f6; padding: 16px 20px; border-radius: 8px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); color: #111827; font-size: 14px; font-weight: 500; display: flex; align-items: center; gap: 12px; animation: slideInRight 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; transition: opacity 0.3s; pointer-events: auto; }
+.toast i { font-size: 18px; }
+.toast.success { border-left-color: #10b981; }
+.toast.success i { color: #10b981; }
+.toast.error { border-left-color: #ef4444; }
+.toast.error i { color: #ef4444; }
+@keyframes slideInRight { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+
+/* =========================================
+   UI COMPONENT : MODAL CONFIRMATION
+   ========================================= */
+.modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.4); backdrop-filter: blur(3px); display: flex; justify-content: center; align-items: center; z-index: 10000; opacity: 1; transition: opacity 0.2s; }
+.modal-overlay.hidden { display: none; opacity: 0; }
+.modal-box { background: white; padding: 24px 30px; border-radius: 16px; width: 100%; max-width: 420px; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1); animation: scaleUp 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+.modal-box h3 { margin: 0 0 12px 0; font-size: 18px; display: flex; align-items: center; gap: 10px; color: #111827; }
+.modal-box p { color: #4b5563; font-size: 14px; margin: 0 0 24px 0; line-height: 1.5; }
+.modal-actions { display: flex; justify-content: flex-end; gap: 12px; }
+@keyframes scaleUp { from { transform: scale(0.9); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+
+/* =========================================
+   DARK MODE
+   ========================================= */
+body.dark-mode { background: #0f172a; color: #f8fafc; }
+body.dark-mode .sidebar, body.dark-mode .topbar, body.dark-mode .card { background: #1e293b; border-color: #334155; }
+body.dark-mode .app.logged-out .content { background: #0f172a; }
+body.dark-mode .brand h1, body.dark-mode .page-header h2, body.dark-mode .stat-card h2, body.dark-mode .history-widget h4, body.dark-mode label, body.dark-mode .user-profile .info strong { color: #f8fafc; }
+body.dark-mode .nav-btn, body.dark-mode th { color: #cbd5e1; }
+body.dark-mode .nav-btn:hover, body.dark-mode tbody tr:hover { background: #334155; }
+body.dark-mode .nav-btn.active { background: #475569; color: #ffffff; }
+body.dark-mode input, body.dark-mode textarea, body.dark-mode select { background: #0f172a; color: #f8fafc; border-color: #475569; }
+body.dark-mode th, body.dark-mode td { border-color: #334155; }
+body.dark-mode .history-widget { background: #0f172a; border-color: #334155; }
+body.dark-mode .history-item { border-color: #334155; }
+body.dark-mode .btn-light, body.dark-mode .page-btn { background: #334155; color: #f8fafc; border-color: #475569; }
+body.dark-mode .btn-light:hover, body.dark-mode .page-btn:hover { background: #475569; }
+body.dark-mode .user-profile, body.dark-mode .card h3 { border-color: #334155; }
+body.dark-mode .duty-btn { background: #334155; border-color: #475569; color: #f8fafc; }
+body.dark-mode .duty-btn.on-duty { background: #064e3b; border-color: #065f46; color: #34d399; }
+
+body.dark-mode .autocomplete-items, body.dark-mode .toast, body.dark-mode .modal-box, body.dark-mode .login-container { background: #1e293b; border-color: #334155; color: #f8fafc; }
+body.dark-mode .autocomplete-item { color: #f8fafc; border-color: #334155; }
+body.dark-mode .autocomplete-item:hover { background-color: #334155; }
+body.dark-mode .toast.success { border-left-color: #34d399; }
+body.dark-mode .toast.success i { color: #34d399; }
+body.dark-mode .toast.error { border-left-color: #f87171; }
+body.dark-mode .toast.error i { color: #f87171; }
+body.dark-mode .modal-box p, body.dark-mode .login-container p { color: #cbd5e1; }
+body.dark-mode .modal-box h3, body.dark-mode .login-container h2 { color: #f8fafc; }
