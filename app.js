@@ -1,150 +1,283 @@
 /**
  * ============================================================================
- * MDT - LSPD / SASP - SCRIPT PRINCIPAL
+ * MDT - LSPD / SASP / DOJ - SCRIPT PRINCIPAL & BASE DE DONNÉES SUPABASE
  * ============================================================================
  */
 
 document.addEventListener('DOMContentLoaded', () => {
+
+    // ========================================================================
+    // 0. MOTEUR DE BASE DE DONNÉES (SUPABASE TEMPS RÉEL)
+    // ========================================================================
+    const SUPABASE_URL = 'https://fbabjudjpficzkwthzfi.supabase.co'; 
+    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZiYWJqdWRqcGZpY3prd3RoemZpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzUwNzk3NDcsImV4cCI6MjA5MDY1NTc0N30.qFcwkYeiLbnAqw6XoajtWD-fx3VpYyLVBrC2ISVNMOQ';
     
-    // ==========================================
-    // 1. SYSTÈME DE CONNEXION, PERMISSIONS ET PROFIL
-    // ==========================================
+    // Initialisation du client Supabase
+    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    const MDT_Database = {
+        data: {
+            citoyens: [],
+            effectifs: [],
+            poles: [],
+            opReports: [],
+            armes: [],
+            bracelets: [],
+            vehicules: [], 
+            dossiersPreuves: [],
+            interrogatoires: [],
+            plaintes: [],
+            incidents: []
+        },
+
+        async init() {
+            console.log("Tentative de connexion à Supabase en cours...");
+            
+            // 1. Récupère les données sauvegardées sur Supabase
+            const { data, error } = await supabase
+                .from('mdt_storage')
+                .select('data')
+                .eq('id', 1)
+                .single();
+
+            if (error) {
+                console.error("Erreur lors de la récupération des données :", error);
+            }
+
+            if (data && data.data && Object.keys(data.data).length > 0) {
+                this.data = data.data;
+                console.log("Données chargées avec succès depuis Supabase !");
+            } else {
+                console.log("Base de données vide, création des données par défaut...");
+                // Ajout d'effectifs par défaut si la base est totalement vide
+                this.data.effectifs = [
+                    { firstname: "John", lastname: "Doe", grade: "Officier II", matricule: "45", iban: "LS-112233", birthdate: "05/08/1995" },
+                    { firstname: "DEV", lastname: "Photon", grade: "Capitaine SASP", matricule: "21", iban: "LS-998877", birthdate: "12/01/2000" }
+                ];
+                // Sauvegarde initiale
+                this.sync(); 
+            }
+
+            // 2. Écoute le Temps Réel (La magie du multijoueur)
+            // Dès qu'un autre policier modifie la base, ce code met à jour ton écran instantanément !
+            supabase.channel('custom-all-channel')
+              .on(
+                'postgres_changes',
+                { event: 'UPDATE', schema: 'public', table: 'mdt_storage', filter: 'id=eq.1' },
+                (payload) => {
+                  console.log("Mise à jour en temps réel reçue d'un autre joueur !");
+                  this.data = payload.new.data;
+                  // Si l'utilisateur est connecté, on rafraîchit l'interface visuelle
+                  if (currentUserProfile) {
+                      refreshAllViews();
+                  }
+                }
+              )
+              .subscribe();
+        },
+
+        async sync() {
+            // Envoi des données modifiées vers Supabase
+            const { error } = await supabase
+                .from('mdt_storage')
+                .update({ data: this.data })
+                .eq('id', 1);
+
+            if (error) {
+                console.error("Erreur lors de la sauvegarde Supabase :", error);
+            } else {
+                // Met à jour l'interface locale si ça a fonctionné
+                if (currentUserProfile) {
+                    refreshAllViews();
+                }
+            }
+        }
+    };
+
+    // Lance la connexion au chargement de la page
+    MDT_Database.init();
+
+
+    // ========================================================================
+    // 1. SYSTÈME DE CONNEXION & UTILISATEURS
+    // ========================================================================
     const loginScreen = document.getElementById('login-screen');
     const mdtApp = document.getElementById('mdt-app');
     const btnLogin = document.getElementById('btn-login');
     const inputUser = document.getElementById('login-username');
-    const loginError = document.getElementById('login-error');
     const passwordInput = document.getElementById('login-password');
+    const loginError = document.getElementById('login-error');
     const togglePassword = document.getElementById('toggle-password');
 
-    let currentUserProfile = {
-        name: "DEV Photon",
-        grade: "SASP",
-        matricule: "21",
-        phone: "555-0021",
-        iban: "LS-99887766",
-        email: "photon@sasp.ls"
+    // Base des utilisateurs
+    const mdtUsers = {
+        'officier': { 
+            pwd: 'mdp', 
+            name: 'John Doe', 
+            grade: 'Officier II', 
+            matricule: '45', 
+            permissions: ['general', 'registres', 'preuves', 'mes_dossiers'] 
+        },
+        'superviseur': { 
+            pwd: 'mdp', 
+            name: 'DEV Photon', 
+            grade: 'Capitaine SASP', 
+            matricule: '21', 
+            permissions: ['general', 'registres', 'preuves', 'mes_dossiers', 'superviseur'] 
+        }
     };
 
-    if (inputUser) {
-        inputUser.addEventListener('keydown', (e) => {
-            if (e.key === 'Enter') { e.preventDefault(); if (passwordInput) passwordInput.focus(); }
-        });
-    }
+    let currentUserProfile = null;
 
-    if (passwordInput) {
-        passwordInput.addEventListener('keydown', (e) => {
-            if (e.key === 'Enter') { e.preventDefault(); if (btnLogin) btnLogin.click(); }
-        });
-    }
+    function handleLogin() {
+        const username = inputUser.value.trim().toLowerCase();
+        const pwd = passwordInput.value;
+        const user = mdtUsers[username];
 
-    const permissions = {
-        'SASP': { name: 'DEV Photon', grade: 'SASP', hideSections: [] },
-        'EMS': { name: 'MEDIC LOOP', grade: 'EMS - Directeur', hideSections: ['registres_police', 'police_academy', 'superviseur', 'mes_interrogatoires', 'poles'] },
-        'DOJ': { name: 'JUGE GORDON', grade: 'DOJ - Juge Suprême', hideSections: ['police_academy'] }
-    };
-
-    function updateUserSidebar() {
-        document.querySelector('.user-name').innerHTML = `${currentUserProfile.name} <i class="fa-solid fa-gear" id="btn-settings" style="cursor: pointer; margin-left: 5px;" title="Mon Profil"></i> <i class="fa-solid fa-power-off" id="btn-logout" style="cursor: pointer; margin-left: 5px;" title="Se déconnecter"></i>`;
-        document.querySelector('.user-rank').textContent = `${currentUserProfile.grade} - Matricule: ${currentUserProfile.matricule}`;
-    }
-
-    btnLogin.addEventListener('click', () => {
-        const username = inputUser.value.trim().toUpperCase();
-        
-        if (permissions[username]) {
-            currentUserProfile.name = permissions[username].name;
-            currentUserProfile.grade = permissions[username].grade.split(' - ')[0];
-            
+        if (user && user.pwd === pwd) {
+            // Connexion réussie
+            currentUserProfile = user;
             loginError.classList.add('hidden');
             loginScreen.classList.add('hidden');
             mdtApp.classList.remove('hidden');
 
-            updateUserSidebar();
+            // Mise à jour de la barre latérale en bas à gauche
+            const userNameElement = document.querySelector('.user-name');
+            if (userNameElement) {
+                userNameElement.innerHTML = `${currentUserProfile.name} <i class="fa-solid fa-gear" id="btn-settings" style="cursor: pointer; margin-left: 5px;" title="Mon Profil"></i> <i class="fa-solid fa-power-off" id="btn-logout" style="cursor: pointer; margin-left: 5px;" title="Se déconnecter"></i>`;
+            }
+            
+            const userRankElement = document.querySelector('.user-rank');
+            if (userRankElement) {
+                userRankElement.textContent = `${currentUserProfile.grade} - Mat: ${currentUserProfile.matricule}`;
+            }
 
-            document.querySelectorAll('.nav-section, .nav-item').forEach(el => {
-                el.style.display = 'block';
-                const sectionId = el.getAttribute('data-section');
-                if (sectionId && permissions[username].hideSections.includes(sectionId)) { 
-                    el.style.display = 'none'; 
+            // Gestion de l'affichage des sections selon les permissions
+            const sections = document.querySelectorAll('.nav-section');
+            sections.forEach(section => {
+                const sectionId = section.getAttribute('data-section');
+                if (currentUserProfile.permissions.includes(sectionId)) {
+                    section.style.display = 'block';
+                } else {
+                    section.style.display = 'none';
                 }
             });
 
-            document.querySelectorAll('.nav-section-title.collapsible').forEach(header => {
-                const list = header.nextElementSibling;
-                const icon = header.querySelector('i');
-                if (list && icon) {
-                    if (header.textContent.includes('Général')) {
-                        list.classList.remove('collapsed');
-                        icon.classList.remove('fa-chevron-down'); icon.classList.add('fa-chevron-up');
-                    } else {
-                        list.classList.add('collapsed');
-                        icon.classList.remove('fa-chevron-up'); icon.classList.add('fa-chevron-down');
-                    }
-                }
-            });
-        } else { 
-            loginError.classList.remove('hidden'); 
+            // Rafraîchir l'interface
+            refreshAllViews();
+        } else {
+            // Échec de la connexion
+            loginError.classList.remove('hidden');
         }
-    });
+    }
 
-    if (togglePassword && passwordInput) {
-        togglePassword.addEventListener('click', () => {
-            const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
-            passwordInput.setAttribute('type', type);
-            togglePassword.classList.toggle('fa-eye');
-            togglePassword.classList.toggle('fa-eye-slash');
+    if (btnLogin) {
+        btnLogin.addEventListener('click', handleLogin);
+    }
+
+    if (passwordInput) {
+        passwordInput.addEventListener('keydown', (e) => { 
+            if (e.key === 'Enter') {
+                handleLogin(); 
+            }
         });
     }
 
+    if (inputUser) {
+        inputUser.addEventListener('keydown', (e) => { 
+            if (e.key === 'Enter') {
+                passwordInput.focus(); 
+            }
+        });
+    }
+
+    if (togglePassword && passwordInput) {
+        togglePassword.addEventListener('click', () => {
+            if (passwordInput.getAttribute('type') === 'password') {
+                passwordInput.setAttribute('type', 'text');
+                togglePassword.classList.remove('fa-eye');
+                togglePassword.classList.add('fa-eye-slash');
+            } else {
+                passwordInput.setAttribute('type', 'password');
+                togglePassword.classList.remove('fa-eye-slash');
+                togglePassword.classList.add('fa-eye');
+            }
+        });
+    }
+
+    // Clics sur les boutons de paramètres et déconnexion
     document.addEventListener('click', (e) => {
-        if(e.target.closest('#btn-logout')) {
-            document.getElementById('mdt-app').classList.add('hidden');
-            document.getElementById('login-screen').classList.remove('hidden');
-            if(inputUser) inputUser.value = '';
-            if(passwordInput) passwordInput.value = '';
-            if(inputUser) inputUser.focus();
+        if (e.target.closest('#btn-logout')) {
+            mdtApp.classList.add('hidden');
+            loginScreen.classList.remove('hidden');
+            inputUser.value = ''; 
+            passwordInput.value = '';
+            currentUserProfile = null;
         }
         
-        if(e.target.closest('#btn-settings')) {
+        if (e.target.closest('#btn-settings')) {
             document.getElementById('profile-setting-name').value = currentUserProfile.name;
             document.getElementById('profile-setting-matricule').value = currentUserProfile.matricule;
-            document.getElementById('profile-setting-phone').value = currentUserProfile.phone;
-            document.getElementById('profile-setting-iban').value = currentUserProfile.iban;
-            document.getElementById('profile-setting-email').value = currentUserProfile.email;
+            document.getElementById('profile-setting-phone').value = currentUserProfile.phone || '';
+            document.getElementById('profile-setting-iban').value = currentUserProfile.iban || '';
+            document.getElementById('profile-setting-email').value = currentUserProfile.email || '';
             openModal('modal-edit-profile');
         }
     });
 
     const btnSaveProfile = document.getElementById('btn-save-profile');
-    if(btnSaveProfile) {
+    if (btnSaveProfile) {
         btnSaveProfile.addEventListener('click', () => {
             currentUserProfile.name = document.getElementById('profile-setting-name').value;
             currentUserProfile.matricule = document.getElementById('profile-setting-matricule').value;
             currentUserProfile.phone = document.getElementById('profile-setting-phone').value;
             currentUserProfile.iban = document.getElementById('profile-setting-iban').value;
             currentUserProfile.email = document.getElementById('profile-setting-email').value;
-            updateUserSidebar(); 
+            
+            document.querySelector('.user-name').innerHTML = `${currentUserProfile.name} <i class="fa-solid fa-gear" id="btn-settings" style="cursor: pointer; margin-left: 5px;"></i> <i class="fa-solid fa-power-off" id="btn-logout" style="cursor: pointer; margin-left: 5px;"></i>`;
+            document.querySelector('.user-rank').textContent = `${currentUserProfile.grade} - Mat: ${currentUserProfile.matricule}`;
             closeModals();
         });
     }
 
-    // ==========================================
+
+    // ========================================================================
     // 2. NAVIGATION LATÉRALE
-    // ==========================================
-    const navItems = document.querySelectorAll('.nav-item[data-target], .btn-sidebar[data-target]');
+    // ========================================================================
+    const navItems = document.querySelectorAll('.nav-item[data-target]');
     const views = document.querySelectorAll('.view-page');
     
     navItems.forEach(item => {
         item.addEventListener('click', () => {
-            document.querySelectorAll('.nav-item').forEach(nav => nav.classList.remove('active'));
-            if(item.classList.contains('nav-item')) item.classList.add('active'); 
+            // Nettoyer les classes actives
+            document.querySelectorAll('.nav-item').forEach(nav => {
+                nav.classList.remove('active');
+            });
+            item.classList.add('active'); 
             
+            // Afficher la bonne vue
             const target = item.getAttribute('data-target');
-            views.forEach(view => view.classList.remove('active'));
+            views.forEach(view => {
+                view.classList.remove('active');
+            });
             
             const targetView = document.getElementById(`view-${target}`);
-            if (targetView) targetView.classList.add('active'); 
+            if (targetView) {
+                targetView.classList.add('active'); 
+            }
+
+            // Réinitialiser la vue des dossiers de preuves au changement d'onglet
+            if (target === 'preuves') {
+                const listState = document.getElementById('preuves-list-state');
+                const openState = document.getElementById('preuves-open-state');
+                if (listState && openState) {
+                    listState.classList.remove('hidden');
+                    openState.classList.add('hidden');
+                    currentOpenDossierId = null;
+                }
+            }
+
+            refreshAllViews();
         });
     });
 
@@ -153,35 +286,96 @@ document.addEventListener('DOMContentLoaded', () => {
         header.addEventListener('click', () => {
             const list = header.nextElementSibling;
             const icon = header.querySelector('i');
+            
             if (list && list.classList.contains('nav-list')) {
                 list.classList.toggle('collapsed');
                 if (icon) {
-                    if (list.classList.contains('collapsed')) icon.classList.replace('fa-chevron-up', 'fa-chevron-down'); 
-                    else icon.classList.replace('fa-chevron-down', 'fa-chevron-up'); 
+                    if (list.classList.contains('collapsed')) {
+                        icon.classList.replace('fa-chevron-up', 'fa-chevron-down');
+                    } else {
+                        icon.classList.replace('fa-chevron-down', 'fa-chevron-up'); 
+                    }
                 }
             }
         });
     });
 
-    // ==========================================
-    // 3. BASE DE DONNÉES EFFECTIFS
-    // ==========================================
-    const effectifsDB = [
-        { firstname: "DEV", lastname: "PHOTON", grade: "Capitaine SASP", iban: "LS-99887766", birthdate: "12/01/2000" },
-        { firstname: "JOHN", lastname: "DOE", grade: "Officier II LSPD", iban: "LS-11223344", birthdate: "05/08/1995" }
-    ];
+    function refreshAllViews() {
+        if (!currentUserProfile) return;
+        
+        updateDashboardWanted();
+        renderCitizenList();
+        renderEffectifsList();
+        renderPoles();
+        renderOpReportsList();
+        renderArmesList();
+        renderBraceletsList();
+        renderVehiculesList();
+        renderPreuvesDossiers();
+        
+        renderMesInterrogatoires();
+        renderMesPlaintes();
+        renderMesIncidents();
+
+        if (currentUserProfile.permissions.includes('superviseur')) {
+            renderSupArrestations();
+            renderSupInterrogatoires();
+            renderSupIncidents();
+            renderAgentStatsList();
+        }
+    }
+
+
+    // ========================================================================
+    // 3. VUE ACCUEIL & EFFECTIFS
+    // ========================================================================
+    function updateDashboardWanted() {
+        const dashboardWantedList = document.getElementById('dashboard-wanted-list');
+        const dashboardWantedCount = document.getElementById('dashboard-wanted-count');
+        
+        if (!dashboardWantedList || !dashboardWantedCount) return;
+
+        const citoyens = MDT_Database.data.citoyens || [];
+        const wantedCitizens = citoyens.filter(c => c.wanted === true);
+        
+        dashboardWantedCount.textContent = `${wantedCitizens.length} personnes recherchées`;
+        
+        if (wantedCitizens.length === 0) {
+            dashboardWantedList.innerHTML = `<p class="text-muted" style="padding: 15px;">Aucun individu recherché actuellement.</p>`;
+            return;
+        }
+
+        let html = '';
+        wantedCitizens.forEach(c => {
+            html += `
+            <div class="wanted-card" style="margin-bottom: 10px;">
+                <div class="wanted-img-placeholder">
+                    <img src="${c.avatar}" style="width:100%; height:100%; border-radius:50%; object-fit:cover;">
+                </div>
+                <div class="wanted-details">
+                    <h4>${c.firstname} ${c.lastname} (${c.gender})</h4>
+                    <p><i class="fa-solid fa-phone"></i> ${c.phone}</p>
+                    <p><i class="fa-solid fa-calendar"></i> ${c.birthdate}</p>
+                </div>
+            </div>`;
+        });
+        
+        dashboardWantedList.innerHTML = html;
+    }
 
     function renderEffectifsList(filterTerm = '') {
         const container = document.getElementById('effectifs-list-container');
-        if(!container) return;
+        if (!container) return;
         
         container.innerHTML = '';
-        const filtered = effectifsDB.filter(agent => {
+        
+        const effectifs = MDT_Database.data.effectifs || [];
+        const filtered = effectifs.filter(agent => {
             const fullName = `${agent.firstname} ${agent.lastname}`.toLowerCase();
             return fullName.includes(filterTerm.toLowerCase());
         });
 
-        if(filtered.length === 0) {
+        if (filtered.length === 0) {
             container.innerHTML = '<p class="text-muted" style="padding: 10px;">Aucun agent trouvé.</p>';
             return;
         }
@@ -195,6 +389,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     </div>
                     <div class="effectif-details hidden" id="effectif-details-${index}" style="padding: 15px; border-top: 1px solid var(--border-color);">
                         <p style="margin-bottom: 8px;"><strong>Grade :</strong> <span style="color: var(--accent-primary); font-weight: 600;">${agent.grade}</span></p>
+                        <p style="margin-bottom: 8px;"><strong>Matricule :</strong> ${agent.matricule}</p>
                         <p style="margin-bottom: 8px;"><strong>IBAN :</strong> ${agent.iban}</p>
                         <p style="margin: 0;"><strong>Date de naissance :</strong> ${agent.birthdate}</p>
                     </div>
@@ -220,30 +415,39 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     const searchEffectifsInput = document.getElementById('search-effectifs-input');
-    if(searchEffectifsInput) searchEffectifsInput.addEventListener('input', (e) => renderEffectifsList(e.target.value));
+    if (searchEffectifsInput) {
+        searchEffectifsInput.addEventListener('input', (e) => {
+            renderEffectifsList(e.target.value);
+        });
+    }
 
-    // ==========================================
-    // 4. BASE DE DONNÉES PÔLES / SPÉCIALITÉS
-    // ==========================================
-    let polesDB = [];
+
+    // ========================================================================
+    // 4. GESTION DES PÔLES
+    // ========================================================================
     let editingPoleIndex = null;
 
     function renderPoles() {
         const container = document.getElementById('poles-container');
         const emptyState = document.getElementById('poles-empty-state');
-        if(!container || !emptyState) return;
+        if (!container || !emptyState) return;
 
         container.innerHTML = '';
+        const poles = MDT_Database.data.poles || [];
 
-        if(polesDB.length === 0) {
+        if (poles.length === 0) {
             emptyState.classList.remove('hidden');
         } else {
             emptyState.classList.add('hidden');
-            polesDB.forEach((pole, index) => {
+            poles.forEach((pole, index) => {
                 let membresHtml = '';
-                if(pole.membres) {
+                if (pole.membres) {
                     const lines = pole.membres.split('\n');
-                    lines.forEach(l => { if(l.trim() !== "") membresHtml += `<li>${l}</li>`; });
+                    lines.forEach(line => { 
+                        if(line.trim() !== "") {
+                            membresHtml += `<li>${line}</li>`; 
+                        }
+                    });
                 }
 
                 container.innerHTML += `
@@ -253,6 +457,7 @@ document.addEventListener('DOMContentLoaded', () => {
                             <i class="fa-solid fa-ellipsis-vertical" style="color: var(--text-muted); font-size: 1.2rem; padding: 5px;"></i>
                             <div class="context-menu hidden pole-menu" id="menu-pole-${index}" style="top: 25px; right: 0; width: 120px;">
                                 <button class="menu-item btn-edit-pole" data-index="${index}"><i class="fa-solid fa-pen"></i> Modifier</button>
+                                <button class="menu-item danger btn-delete-pole" data-index="${index}"><i class="fa-solid fa-trash"></i> Supprimer</button>
                             </div>
                         </div>
 
@@ -269,16 +474,20 @@ document.addEventListener('DOMContentLoaded', () => {
                 `;
             });
 
+            // Gérer l'ouverture des menus contextuels
             container.querySelectorAll('.pole-options').forEach(opt => {
                 opt.addEventListener('click', (e) => {
                     e.stopPropagation();
                     const idx = opt.getAttribute('data-index');
                     const menu = document.getElementById(`menu-pole-${idx}`);
-                    document.querySelectorAll('.pole-menu').forEach(m => { if(m !== menu) m.classList.add('hidden'); });
+                    document.querySelectorAll('.pole-menu').forEach(m => { 
+                        if(m !== menu) m.classList.add('hidden'); 
+                    });
                     menu.classList.toggle('hidden');
                 });
             });
 
+            // Gérer les clics sur Modifier
             container.querySelectorAll('.btn-edit-pole').forEach(btn => {
                 btn.addEventListener('click', (e) => {
                     e.stopPropagation();
@@ -286,11 +495,22 @@ document.addEventListener('DOMContentLoaded', () => {
                     openEditPole(idx); 
                 });
             });
+
+            // Gérer les clics sur Supprimer
+            container.querySelectorAll('.btn-delete-pole').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    if (confirm("Voulez-vous vraiment supprimer ce pôle ?")) {
+                        MDT_Database.data.poles.splice(btn.getAttribute('data-index'), 1);
+                        MDT_Database.sync();
+                    }
+                });
+            });
         }
     }
 
     const btnOpenPoleModal = document.getElementById('btn-open-pole-modal');
-    if(btnOpenPoleModal) {
+    if (btnOpenPoleModal) {
         btnOpenPoleModal.addEventListener('click', () => {
             editingPoleIndex = null;
             document.getElementById('pole-modal-title').textContent = "Ajouter un pôle";
@@ -305,7 +525,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function openEditPole(index) {
         editingPoleIndex = index;
-        const pole = polesDB[index];
+        const pole = MDT_Database.data.poles[index];
         document.getElementById('pole-modal-title').textContent = "Modifier le pôle";
         document.getElementById('pole-title').value = pole.title;
         document.getElementById('pole-lead').value = pole.lead;
@@ -316,10 +536,13 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     const btnSavePole = document.getElementById('btn-save-pole');
-    if(btnSavePole) {
+    if (btnSavePole) {
         btnSavePole.addEventListener('click', () => {
             const title = document.getElementById('pole-title').value.trim();
-            if(!title) return alert("Le titre du pôle est obligatoire.");
+            if (!title) {
+                alert("Le titre du pôle est obligatoire.");
+                return;
+            }
 
             const poleData = {
                 title: title,
@@ -329,65 +552,152 @@ document.addEventListener('DOMContentLoaded', () => {
                 membres: document.getElementById('pole-membres').value
             };
 
-            if(editingPoleIndex !== null) polesDB[editingPoleIndex] = poleData;
-            else polesDB.push(poleData);
+            if (editingPoleIndex !== null) {
+                MDT_Database.data.poles[editingPoleIndex] = poleData;
+            } else {
+                MDT_Database.data.poles.push(poleData);
+            }
 
-            renderPoles();
+            MDT_Database.sync();
             closeModals();
         });
     }
 
-    document.addEventListener('click', () => {
-        document.querySelectorAll('.pole-menu').forEach(menu => menu.classList.add('hidden'));
-    });
 
-
-    // ==========================================
-    // 5. BASE DE DONNÉES RAPPORTS D'OPÉRATION
-    // ==========================================
-    let opReportsDB = [];
+    // ========================================================================
+    // 5. GESTION DES RAPPORTS D'OPÉRATION
+    // ========================================================================
     let currentOpReportImages = [];
     let currentActiveOpReport = null;
+    let editingOpReportId = null;
 
     function renderOpReportsList(filterTerm = '') {
         const container = document.getElementById('op-report-list-container');
-        if(!container) return;
+        if (!container) return;
         
         container.innerHTML = '';
-        const filtered = opReportsDB.filter(r => r.id.toLowerCase().includes(filterTerm.toLowerCase()));
+        const opReports = MDT_Database.data.opReports || [];
+        const filtered = opReports.filter(r => r.id.toLowerCase().includes(filterTerm.toLowerCase()));
 
         filtered.forEach(r => {
             const isActive = currentActiveOpReport && currentActiveOpReport.id === r.id ? 'active' : '';
             container.innerHTML += `
-                <div class="citoyen-list-item ${isActive}" data-id="${r.id}">
-                    <div class="citoyen-list-info" style="width: 100%;">
+                <div class="citoyen-list-item ${isActive}" data-id="${r.id}" style="position: relative;">
+                    <div class="citoyen-list-info" style="width: 100%; padding-right: 25px;">
                         <h4 style="color:var(--text-main); font-size: 0.95rem;">${r.id}</h4>
                         <span style="display:block; color:white;">Par ${r.redacteur}</span>
                         <span style="display:block; color:var(--text-muted);">${r.type}</span>
                         <span style="display:block; color:var(--text-muted);">Le ${r.date}</span>
                     </div>
+                    <div style="position: absolute; top: 10px; right: 10px; cursor: pointer;" class="op-list-options" data-id="${r.id}">
+                        <i class="fa-solid fa-ellipsis-vertical" style="color: var(--text-muted); font-size: 1.2rem; padding: 5px;"></i>
+                        <div class="context-menu hidden op-report-menu" id="menu-op-${r.id}" style="top: 25px; right: 0; width: 120px;">
+                            <button class="menu-item btn-edit-op" data-id="${r.id}"><i class="fa-solid fa-pen"></i> Modifier</button>
+                            <button class="menu-item danger btn-delete-op" data-id="${r.id}"><i class="fa-solid fa-trash"></i> Supprimer</button>
+                        </div>
+                    </div>
                 </div>
             `;
         });
 
+        // Clique sur un rapport pour voir les détails
         container.querySelectorAll('.citoyen-list-item').forEach(item => {
-            item.addEventListener('click', () => {
+            item.addEventListener('click', (e) => {
+                if (e.target.closest('.op-list-options')) return; 
+                
                 const id = item.getAttribute('data-id');
-                currentActiveOpReport = opReportsDB.find(r => r.id === id);
+                currentActiveOpReport = MDT_Database.data.opReports.find(r => r.id === id);
                 renderOpReportDetails();
-                renderOpReportsList(document.getElementById('search-op-report-input').value);
+                
+                // On relance le rendu de la liste pour mettre à jour la classe 'active'
+                const searchInput = document.getElementById('search-op-report-input');
+                renderOpReportsList(searchInput ? searchInput.value : '');
+            });
+        });
+
+        // Les petits points des options
+        container.querySelectorAll('.op-list-options').forEach(opt => {
+            opt.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const id = opt.getAttribute('data-id');
+                const menu = document.getElementById(`menu-op-${id}`);
+                
+                document.querySelectorAll('.op-report-menu').forEach(m => { 
+                    if(m !== menu) m.classList.add('hidden'); 
+                });
+                menu.classList.toggle('hidden');
+            });
+        });
+
+        // Modification
+        container.querySelectorAll('.btn-edit-op').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const id = btn.getAttribute('data-id');
+                const report = MDT_Database.data.opReports.find(r => r.id === id);
+                if (report) {
+                    editingOpReportId = id;
+                    document.getElementById('op-date').value = report.date;
+                    document.getElementById('op-type').value = report.type;
+                    document.getElementById('op-officiers').value = report.officiers;
+                    document.getElementById('op-otages').value = report.otages || '';
+                    document.getElementById('op-lieu').value = report.lieu;
+                    document.getElementById('op-revendications').value = report.revendications || '';
+                    document.getElementById('op-lead-nego').value = report.leadNego || '';
+                    document.getElementById('op-lead-terrain').value = report.leadTerrain || '';
+                    document.getElementById('op-text').value = report.text;
+                    document.getElementById('op-dossier').value = report.dossier || '';
+                    
+                    currentOpReportImages = [...(report.images || [])];
+                    
+                    const photosContainer = document.getElementById('op-photos-container');
+                    photosContainer.innerHTML = '';
+                    currentOpReportImages.forEach(src => {
+                        const img = document.createElement('img'); 
+                        img.src = src; 
+                        img.style.width = '70px'; 
+                        img.style.height = '70px'; 
+                        img.style.objectFit = 'cover'; 
+                        img.style.borderRadius = '4px'; 
+                        img.style.border = '2px solid var(--accent-primary)';
+                        photosContainer.appendChild(img);
+                    });
+                    
+                    openModal('modal-op-report');
+                }
+            });
+        });
+
+        // Suppression
+        container.querySelectorAll('.btn-delete-op').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const id = btn.getAttribute('data-id');
+                if (confirm("Voulez-vous vraiment supprimer ce rapport ?")) {
+                    MDT_Database.data.opReports = MDT_Database.data.opReports.filter(r => r.id !== id);
+                    
+                    if (currentActiveOpReport && currentActiveOpReport.id === id) {
+                        currentActiveOpReport = null;
+                        renderOpReportDetails();
+                    }
+                    MDT_Database.sync();
+                }
             });
         });
     }
 
     const searchOpReportInput = document.getElementById('search-op-report-input');
-    if(searchOpReportInput) searchOpReportInput.addEventListener('input', (e) => renderOpReportsList(e.target.value));
+    if (searchOpReportInput) {
+        searchOpReportInput.addEventListener('input', (e) => {
+            renderOpReportsList(e.target.value);
+        });
+    }
 
     function renderOpReportDetails() {
         const emptyState = document.getElementById('op-report-empty-state');
         const detailsState = document.getElementById('op-report-details-state');
         
-        if(!currentActiveOpReport) {
+        if (!currentActiveOpReport) {
             emptyState.classList.remove('hidden');
             detailsState.classList.add('hidden');
             return;
@@ -397,7 +707,11 @@ document.addEventListener('DOMContentLoaded', () => {
         detailsState.classList.remove('hidden');
 
         const r = currentActiveOpReport;
-        let photosHtml = (r.images || []).map(img => `<img src="${img}" style="width: 120px; height: 120px; object-fit: cover; border-radius: 4px; border: 1px solid var(--border-color);">`).join('');
+        
+        let photosHtml = '';
+        if (r.images && r.images.length > 0) {
+            photosHtml = r.images.map(img => `<img src="${img}" style="width: 120px; height: 120px; object-fit: cover; border-radius: 4px; border: 1px solid var(--border-color);">`).join('');
+        }
         
         detailsState.innerHTML = `
             <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 25px;">
@@ -455,7 +769,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 <div style="background: var(--bg-input); padding: 15px; border-radius: 4px; border: 1px solid var(--border-color);">
                     <span style="font-size: 0.7rem; color: var(--text-muted); text-transform: uppercase;">Photos preuves</span>
                     <div style="display: flex; gap: 10px; margin-top: 10px; flex-wrap: wrap;">
-                        ${photosHtml || '<p style="color: var(--text-muted); font-size: 0.85rem;">Aucune photo attachée.</p>'}
+                        ${photosHtml !== '' ? photosHtml : '<p style="color: var(--text-muted); font-size: 0.85rem;">Aucune photo attachée.</p>'}
                     </div>
                 </div>
             </div>
@@ -463,19 +777,14 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     const btnOpenOpReport = document.getElementById('btn-open-op-report');
-    if(btnOpenOpReport) {
+    if (btnOpenOpReport) {
         btnOpenOpReport.addEventListener('click', () => {
+            editingOpReportId = null;
             currentOpReportImages = [];
-            document.getElementById('op-date').value = '';
-            document.getElementById('op-type').value = '';
-            document.getElementById('op-officiers').value = '';
-            document.getElementById('op-otages').value = '';
-            document.getElementById('op-lieu').value = '';
-            document.getElementById('op-revendications').value = '';
-            document.getElementById('op-lead-nego').value = '';
-            document.getElementById('op-lead-terrain').value = '';
-            document.getElementById('op-text').value = '';
-            document.getElementById('op-dossier').value = '';
+            
+            document.querySelectorAll('#modal-op-report input, #modal-op-report textarea').forEach(i => {
+                i.value = '';
+            });
             document.getElementById('op-photos-container').innerHTML = '';
             
             openModal('modal-op-report');
@@ -483,7 +792,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     const btnSaveOpReport = document.getElementById('btn-save-op-report');
-    if(btnSaveOpReport) {
+    if (btnSaveOpReport) {
         btnSaveOpReport.addEventListener('click', () => {
             const date = document.getElementById('op-date').value;
             const type = document.getElementById('op-type').value;
@@ -491,16 +800,14 @@ document.addEventListener('DOMContentLoaded', () => {
             const officiers = document.getElementById('op-officiers').value;
             const text = document.getElementById('op-text').value;
 
-            if(!date || !type || !lieu || !officiers || !text) {
+            if (!date || !type || !lieu || !officiers || !text) {
                 alert("Veuillez remplir tous les champs marqués d'un *.");
                 return;
             }
 
-            const newId = '#' + Math.floor(Math.random() * 9000 + 1000); // Génère un ID aléatoire type #1701
-
-            const newReport = {
-                id: newId,
-                redacteur: currentUserProfile.matricule + ' | ' + currentUserProfile.name,
+            const reportData = {
+                id: editingOpReportId || ('#OP-' + Math.floor(Math.random() * 9000 + 1000)),
+                redacteur: currentUserProfile.name,
                 date: date,
                 type: type,
                 lieu: lieu,
@@ -514,43 +821,36 @@ document.addEventListener('DOMContentLoaded', () => {
                 images: [...currentOpReportImages]
             };
 
-            opReportsDB.unshift(newReport);
-            currentActiveOpReport = newReport; // Sélectionne le nouveau rapport
-            
-            renderOpReportsList();
-            renderOpReportDetails();
+            if (editingOpReportId) {
+                const index = MDT_Database.data.opReports.findIndex(r => r.id === editingOpReportId);
+                if (index !== -1) {
+                    MDT_Database.data.opReports[index] = reportData;
+                }
+            } else {
+                MDT_Database.data.opReports.unshift(reportData);
+            }
+
+            currentActiveOpReport = reportData;
+            MDT_Database.sync();
             closeModals();
         });
     }
 
 
-    // ==========================================
-    // 6. BASE DE DONNÉES CITOYENS ET AUTRES (Existants)
-    // ==========================================
-    const profileState = document.getElementById('citoyen-profile-state');
-    const emptyState = document.getElementById('citoyen-empty-state');
-    const profileWantedLabel = document.getElementById('profile-wanted-label');
-
-    let citizensDB = [
-        {
-            id: 'photon',
-            avatar: "https://ui-avatars.com/api/?name=Photon+Dev&background=1e1b4b&color=fff",
-            firstname: "PHOTON", lastname: "DEV", phone: "555-53421", birthdate: "2000-01-12", gender: "Homme",
-            email: "discord.gg/photon@mail.ls", pesos: "89", taille: "189", address: "Vinewood", ethnie: "Caucasienne", 
-            hair: "Noir", eyes: "Bleu", appartenance: "Aucune", job: "Concess",
-            permisConduire: "Valide", ppaCivil: "Oui", ppaChasse: "Non", decede: "Non", wanted: true,
-            mandats: [], tickets: [], rapports: [], plaintes: []
-        }
-    ];
-
+    // ========================================================================
+    // 6. GESTION DES CITOYENS
+    // ========================================================================
     let currentCitizenData = null;
     let currentActiveTab = 'rapports';
 
     function renderCitizenList(filterTerm = '') {
         const container = document.getElementById('citoyen-list-container');
-        if(!container) return;
+        if (!container) return;
+        
         container.innerHTML = '';
-        const filteredCitizens = citizensDB.filter(c => {
+        
+        const citoyens = MDT_Database.data.citoyens || [];
+        const filteredCitizens = citoyens.filter(c => {
             const fullName = `${c.firstname} ${c.lastname}`.toLowerCase();
             return fullName.includes(filterTerm.toLowerCase());
         });
@@ -571,52 +871,32 @@ document.addEventListener('DOMContentLoaded', () => {
         document.querySelectorAll('.citoyen-list-item').forEach(item => {
             item.addEventListener('click', () => {
                 const citizenId = item.getAttribute('data-citizen');
-                const foundCitizen = citizensDB.find(c => c.id === citizenId);
+                const foundCitizen = MDT_Database.data.citoyens.find(c => c.id === citizenId);
+                
                 if (foundCitizen) {
-                    emptyState.classList.add('hidden');
-                    profileState.classList.remove('hidden');
+                    document.getElementById('citoyen-empty-state').classList.add('hidden');
+                    document.getElementById('citoyen-profile-state').classList.remove('hidden');
+                    
                     currentCitizenData = foundCitizen;
                     updateCitizenUI(currentCitizenData);
-                    renderCitizenList(document.getElementById('search-citizen-input').value);
+                    
+                    const searchInput = document.getElementById('search-citizen-input');
+                    renderCitizenList(searchInput ? searchInput.value : '');
                 }
             });
         });
     }
 
-    const searchInput = document.getElementById('search-citizen-input');
-    if(searchInput) searchInput.addEventListener('input', (e) => renderCitizenList(e.target.value));
-
-    function updateDashboardWanted() {
-        const dashboardWantedList = document.getElementById('dashboard-wanted-list');
-        const dashboardWantedCount = document.getElementById('dashboard-wanted-count');
-        if (!dashboardWantedList || !dashboardWantedCount) return;
-
-        const wantedCitizens = citizensDB.filter(c => c.wanted === true);
-        dashboardWantedCount.textContent = `${wantedCitizens.length} personnes recherchées`;
-        
-        if (wantedCitizens.length === 0) {
-            dashboardWantedList.innerHTML = `<p class="text-muted" style="padding: 15px;">Aucun individu recherché actuellement.</p>`;
-            return;
-        }
-
-        let html = '';
-        wantedCitizens.forEach(c => {
-            html += `
-            <div class="wanted-card" style="margin-bottom: 10px;">
-                <div class="wanted-img-placeholder"><img src="${c.avatar}" style="width:100%; height:100%; border-radius:50%; object-fit:cover;"></div>
-                <div class="wanted-details">
-                    <h4>${c.firstname} ${c.lastname} (${c.gender})</h4>
-                    <p><i class="fa-solid fa-phone"></i> ${c.phone}</p>
-                    <p><i class="fa-solid fa-calendar"></i> ${c.birthdate}</p>
-                </div>
-            </div>`;
+    const searchCitizenInput = document.getElementById('search-citizen-input');
+    if (searchCitizenInput) {
+        searchCitizenInput.addEventListener('input', (e) => {
+            renderCitizenList(e.target.value);
         });
-        dashboardWantedList.innerHTML = html;
     }
 
     function renderTabContent(tab) {
         const contentArea = document.getElementById('profile-content-area');
-        if(!contentArea || !currentCitizenData) return;
+        if (!contentArea || !currentCitizenData) return;
         
         contentArea.innerHTML = ''; 
         
@@ -625,9 +905,14 @@ document.addEventListener('DOMContentLoaded', () => {
                 contentArea.innerHTML = '<p class="text-muted" style="padding: 20px;">Aucun rapport d\'arrestation enregistré.</p>';
                 return;
             }
+            
             let html = '';
             currentCitizenData.rapports.forEach((r, index) => {
-                let photosHtml = (r.images || []).map(img => `<img src="${img}" style="width: 70px; height: 70px; object-fit: cover; border-radius: 4px; border: 1px solid var(--border-color);">`).join('');
+                let photosHtml = '';
+                if (r.images && r.images.length > 0) {
+                    photosHtml = r.images.map(img => `<img src="${img}" style="width: 70px; height: 70px; object-fit: cover; border-radius: 4px; border: 1px solid var(--border-color);">`).join('');
+                }
+                
                 html += `
                 <div class="history-card" style="border-left-color: var(--accent-primary); position: relative;">
                     <div style="position: absolute; top: 15px; right: 15px; cursor: pointer;" class="rapport-options" data-index="${index}">
@@ -649,6 +934,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     ${photosHtml ? `<div style="display: flex; gap: 10px; margin-top: 15px; flex-wrap: wrap;">${photosHtml}</div>` : ''}
                 </div>`;
             });
+            
             contentArea.innerHTML = html;
 
             contentArea.querySelectorAll('.rapport-options').forEach(opt => {
@@ -656,7 +942,9 @@ document.addEventListener('DOMContentLoaded', () => {
                     e.stopPropagation();
                     const idx = opt.getAttribute('data-index');
                     const menu = document.getElementById(`menu-rapport-${idx}`);
-                    document.querySelectorAll('.rapport-menu').forEach(m => { if(m !== menu) m.classList.add('hidden'); });
+                    document.querySelectorAll('.rapport-menu').forEach(m => { 
+                        if(m !== menu) m.classList.add('hidden'); 
+                    });
                     menu.classList.toggle('hidden');
                 });
             });
@@ -678,7 +966,10 @@ document.addEventListener('DOMContentLoaded', () => {
             currentCitizenData.mandats.forEach(mandat => {
                 html += `
                 <div class="history-card" style="border-left-color: var(--warning);">
-                    <div class="history-header"><h4>Mandat d'arrêt</h4><span class="history-date">Le ${mandat.date}</span></div>
+                    <div class="history-header">
+                        <h4>Mandat d'arrêt</h4>
+                        <span class="history-date">Le ${mandat.date}</span>
+                    </div>
                     <p class="history-author">Demandé par : ${mandat.officiers}</p>
                     <p class="history-desc"><strong>Motif :</strong> ${mandat.motif}</p>
                     <p class="history-desc" style="margin-top:8px; color:var(--text-muted); font-size: 0.85rem;">${mandat.desc}</p>
@@ -695,7 +986,10 @@ document.addEventListener('DOMContentLoaded', () => {
             currentCitizenData.tickets.forEach(ticket => {
                 html += `
                 <div class="history-card" style="border-left-color: var(--success);">
-                    <div class="history-header"><h4>Ticket routier</h4><span class="history-date">Le ${ticket.date}</span></div>
+                    <div class="history-header">
+                        <h4>Ticket routier</h4>
+                        <span class="history-date">Le ${ticket.date}</span>
+                    </div>
                     <p class="history-author">Dressé par : ${ticket.officiers} | Lieu : ${ticket.lieu}</p>
                     <p class="history-desc"><strong>Infraction(s) :</strong> ${ticket.infraction}</p>
                     <p class="history-desc" style="margin-top:8px; color:var(--success); font-weight:600;">Amende : $${ticket.amende} | Points retirés : ${ticket.points}</p>
@@ -710,10 +1004,17 @@ document.addEventListener('DOMContentLoaded', () => {
             }
             let html = '';
             currentCitizenData.plaintes.forEach(p => {
-                let photosHtml = (p.images || []).map(img => `<img src="${img}" style="width: 70px; height: 70px; object-fit: cover; border-radius: 4px; border: 1px solid var(--border-color);">`).join('');
+                let photosHtml = '';
+                if (p.images && p.images.length > 0) {
+                    photosHtml = p.images.map(img => `<img src="${img}" style="width: 70px; height: 70px; object-fit: cover; border-radius: 4px; border: 1px solid var(--border-color);">`).join('');
+                }
+                
                 html += `
                 <div class="history-card" style="border-left-color: var(--warning);">
-                    <div class="history-header"><h4>Plainte : ${p.raison}</h4><span class="history-date">Le ${p.date}</span></div>
+                    <div class="history-header">
+                        <h4>Plainte : ${p.raison}</h4>
+                        <span class="history-date">Le ${p.date}</span>
+                    </div>
                     <p class="history-author">Prise par : ${p.officiers} | Déposée contre : <span style="color:var(--danger); font-weight:600;">${p.contre}</span></p>
                     ${p.avocat ? `<p class="history-desc" style="color: var(--warning); margin-top: 5px;"><strong>Avocat :</strong> ${p.avocat}</p>` : ''}
                     <p class="history-desc" style="margin-top:10px;"><strong>Récit :</strong> ${p.text}</p>
@@ -726,19 +1027,17 @@ document.addEventListener('DOMContentLoaded', () => {
 
     document.querySelectorAll('.tab-link').forEach(tab => {
         tab.addEventListener('click', () => {
-            document.querySelectorAll('.tab-link').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.tab-link').forEach(t => {
+                t.classList.remove('active');
+            });
             tab.classList.add('active');
             currentActiveTab = tab.getAttribute('data-tab');
             renderTabContent(currentActiveTab);
         });
     });
 
-    document.addEventListener('click', () => {
-        document.querySelectorAll('.rapport-menu').forEach(menu => menu.classList.add('hidden'));
-    });
-
     function updateCitizenUI(data) {
-        if(!data) return;
+        if (!data) return;
 
         document.getElementById('profile-name').textContent = `${data.firstname} ${data.lastname}`;
         document.getElementById('profile-email').textContent = `<${data.email}>`;
@@ -754,90 +1053,167 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('profile-job').textContent = data.job;
         document.getElementById('profile-main-avatar').src = data.avatar;
 
-        const statPermis = document.getElementById('stat-permis');
-        if(statPermis) { statPermis.textContent = data.permisConduire; statPermis.className = data.permisConduire === 'Valide' ? 'text-success' : 'text-danger'; }
-        const statPpaCivil = document.getElementById('stat-ppa-civil');
-        if(statPpaCivil) { statPpaCivil.textContent = data.ppaCivil; statPpaCivil.className = data.ppaCivil === 'Oui' ? 'text-success' : 'text-danger'; }
-        const statPpaChasse = document.getElementById('stat-ppa-chasse');
-        if(statPpaChasse) { statPpaChasse.textContent = data.ppaChasse; statPpaChasse.className = data.ppaChasse === 'Oui' ? 'text-success' : 'text-danger'; }
-        const statDecede = document.getElementById('stat-decede');
-        if(statDecede) { statDecede.textContent = data.decede; statDecede.className = data.decede === 'Oui' ? 'text-danger' : 'text-success'; }
-        const statWanted = document.getElementById('stat-wanted');
-        if(statWanted) { statWanted.textContent = data.wanted ? 'Oui' : 'Non'; statWanted.className = data.wanted ? 'text-danger' : 'text-success'; }
+        const setStat = (id, val, condition) => {
+            const el = document.getElementById(id);
+            if (el) { 
+                el.textContent = val; 
+                el.className = condition ? 'text-success' : 'text-danger'; 
+            }
+        };
+
+        setStat('stat-permis', data.permisConduire, data.permisConduire === 'Valide');
+        setStat('stat-ppa-civil', data.ppaCivil, data.ppaCivil === 'Oui');
+        setStat('stat-ppa-chasse', data.ppaChasse, data.ppaChasse === 'Oui');
+        setStat('stat-decede', data.decede, data.decede === 'Non');
+        setStat('stat-wanted', data.wanted ? 'Oui' : 'Non', !data.wanted);
         
         const profileWantedLabel = document.getElementById('profile-wanted-label');
-        if(profileWantedLabel) { if(data.wanted) profileWantedLabel.classList.remove('hidden'); else profileWantedLabel.classList.add('hidden'); }
+        if (profileWantedLabel) {
+            if (data.wanted) {
+                profileWantedLabel.classList.remove('hidden');
+            } else {
+                profileWantedLabel.classList.add('hidden');
+            }
+        }
 
         const btnWanted = document.getElementById('menu-remove-wanted');
-        if(btnWanted) { if(data.wanted) { btnWanted.innerHTML = '<i class="fa-solid fa-handcuffs"></i> Retirer du Wanted'; btnWanted.className = 'menu-item success'; } else { btnWanted.innerHTML = '<i class="fa-solid fa-person-rays"></i> Ajouter au Wanted'; btnWanted.className = 'menu-item danger'; } }
+        if (btnWanted) { 
+            if (data.wanted) { 
+                btnWanted.innerHTML = '<i class="fa-solid fa-handcuffs"></i> Retirer du Wanted'; 
+                btnWanted.className = 'menu-item success'; 
+            } else { 
+                btnWanted.innerHTML = '<i class="fa-solid fa-person-rays"></i> Ajouter au Wanted'; 
+                btnWanted.className = 'menu-item danger'; 
+            } 
+        }
         
-        if(document.getElementById('mandat-modal-name')) document.getElementById('mandat-modal-name').textContent = `${data.firstname} ${data.lastname}`;
-        if(document.getElementById('ticket-modal-name')) document.getElementById('ticket-modal-name').textContent = `${data.firstname} ${data.lastname}`;
-        if(document.getElementById('arrest-modal-name')) document.getElementById('arrest-modal-name').textContent = `${data.firstname} ${data.lastname}`;
-        if(document.getElementById('plainte-modal-name')) document.getElementById('plainte-modal-name').textContent = `${data.firstname} ${data.lastname}`;
+        const mandatModalName = document.getElementById('mandat-modal-name');
+        if (mandatModalName) mandatModalName.textContent = `${data.firstname} ${data.lastname}`;
+        
+        const ticketModalName = document.getElementById('ticket-modal-name');
+        if (ticketModalName) ticketModalName.textContent = `${data.firstname} ${data.lastname}`;
+        
+        const arrestModalName = document.getElementById('arrest-modal-name');
+        if (arrestModalName) arrestModalName.textContent = `${data.firstname} ${data.lastname}`;
+        
+        const plainteModalName = document.getElementById('plainte-modal-name');
+        if (plainteModalName) plainteModalName.textContent = `${data.firstname} ${data.lastname}`;
 
         renderTabContent(currentActiveTab);
     }
 
-    // ==========================================
-    // 7. CRÉATION D'UN CITOYEN (ENCODER)
-    // ==========================================
+    // Création d'un citoyen
     const btnSubmitCreate = document.getElementById('btn-submit-create');
-    if(btnSubmitCreate) {
+    if (btnSubmitCreate) {
         btnSubmitCreate.addEventListener('click', () => {
             const firstname = document.getElementById('create-firstname').value.trim().toUpperCase();
             const lastname = document.getElementById('create-lastname').value.trim().toUpperCase();
-            if(!firstname || !lastname) return alert("Le prénom et le nom sont obligatoires.");
+            
+            if (!firstname || !lastname) {
+                alert("Le prénom et le nom sont obligatoires.");
+                return;
+            }
 
-            const newId = 'cit_' + Date.now();
             let previewSrc = document.getElementById('create-photo-preview').src;
-            if (previewSrc.includes('Nouveau+Citoyen')) previewSrc = `https://ui-avatars.com/api/?name=${firstname}+${lastname}&background=1e1b4b&color=fff`;
+            if (previewSrc.includes('Nouveau+Citoyen')) {
+                previewSrc = `https://ui-avatars.com/api/?name=${firstname}+${lastname}&background=1e1b4b&color=fff`;
+            }
 
             const newCitizen = {
-                id: newId, avatar: previewSrc, firstname: firstname, lastname: lastname,
-                phone: document.getElementById('create-phone').value || "Non précisé",
+                id: 'cit_' + Date.now(), 
+                avatar: previewSrc, 
+                firstname: firstname, 
+                lastname: lastname,
+                phone: document.getElementById('create-phone').value || "Non précisé", 
                 birthdate: document.getElementById('create-birthdate').value || "Non précisée",
-                gender: document.getElementById('create-gender').value,
+                gender: document.getElementById('create-gender').value, 
                 email: document.getElementById('create-email').value || "Non précisé",
-                pesos: document.getElementById('create-poids').value || "0",
+                pesos: document.getElementById('create-poids').value || "0", 
                 taille: document.getElementById('create-taille').value || "0",
-                address: document.getElementById('create-address').value || "Non précisée",
+                address: document.getElementById('create-address').value || "Non précisée", 
                 ethnie: document.getElementById('create-ethnie').value,
-                hair: document.getElementById('create-hair').value || "Non précisé",
+                hair: document.getElementById('create-hair').value || "Non précisé", 
                 eyes: document.getElementById('create-eyes').value || "Non précisé",
-                appartenance: document.getElementById('create-appartenance').value || "Aucune",
+                appartenance: document.getElementById('create-appartenance').value || "Aucune", 
                 job: document.getElementById('create-job').value || "Aucun",
-                permisConduire: document.getElementById('create-permis').value,
-                ppaCivil: "Non", ppaChasse: "Non", decede: "Non", wanted: false,
-                mandats: [], tickets: [], rapports: [], plaintes: []
+                permisConduire: document.getElementById('create-permis').value, 
+                ppaCivil: "Non", 
+                ppaChasse: "Non", 
+                decede: "Non", 
+                wanted: false,
+                mandats: [], 
+                tickets: [], 
+                rapports: [], 
+                plaintes: []
             };
 
-            citizensDB.unshift(newCitizen); 
-            renderCitizenList(document.getElementById('search-citizen-input') ? document.getElementById('search-citizen-input').value : '');
-            
-            currentCitizenData = newCitizen;
-            emptyState.classList.add('hidden');
-            profileState.classList.remove('hidden');
-            updateCitizenUI(currentCitizenData);
-            updateDashboardWanted(); 
+            MDT_Database.data.citoyens.unshift(newCitizen); 
+            MDT_Database.sync();
 
-            document.querySelectorAll('#modal-citizen-create input').forEach(i => i.value = '');
+            currentCitizenData = newCitizen;
+            
+            document.getElementById('citoyen-empty-state').classList.add('hidden');
+            document.getElementById('citoyen-profile-state').classList.remove('hidden');
+            updateCitizenUI(currentCitizenData);
+
+            // Vider les champs
+            document.querySelectorAll('#modal-citizen-create input').forEach(i => {
+                i.value = '';
+            });
             document.getElementById('create-photo-preview').src = 'https://ui-avatars.com/api/?name=Nouveau+Citoyen&background=1e1b4b&color=fff';
+            
             closeModals();
         });
     }
 
-    // ==========================================
-    // 8. AUTRES MODALES (ÉDITION CITOYEN, TICKETS, ETC.)
-    // ==========================================
-    if(document.getElementById('menu-revoke-ppa-civil')) { document.getElementById('menu-revoke-ppa-civil').addEventListener('click', () => { if(currentCitizenData) { currentCitizenData.ppaCivil = (currentCitizenData.ppaCivil === "Oui") ? "Non" : "Oui"; updateCitizenUI(currentCitizenData); } }); }
-    if(document.getElementById('menu-revoke-ppa-chasse')) { document.getElementById('menu-revoke-ppa-chasse').addEventListener('click', () => { if(currentCitizenData) { currentCitizenData.ppaChasse = (currentCitizenData.ppaChasse === "Oui") ? "Non" : "Oui"; updateCitizenUI(currentCitizenData); } }); }
-    if(document.getElementById('menu-remove-wanted')) { document.getElementById('menu-remove-wanted').addEventListener('click', () => { if(currentCitizenData) { currentCitizenData.wanted = !currentCitizenData.wanted; updateCitizenUI(currentCitizenData); updateDashboardWanted(); } }); }
+    // Boutons d'actions rapides sur la fiche d'un citoyen (PPA, Wanted)
+    const btnRevokePpaCivil = document.getElementById('menu-revoke-ppa-civil');
+    if (btnRevokePpaCivil) { 
+        btnRevokePpaCivil.addEventListener('click', () => { 
+            if (currentCitizenData) { 
+                currentCitizenData.ppaCivil = (currentCitizenData.ppaCivil === "Oui") ? "Non" : "Oui"; 
+                MDT_Database.sync(); 
+                updateCitizenUI(currentCitizenData); 
+            } 
+        }); 
+    }
+    
+    const btnRevokePpaChasse = document.getElementById('menu-revoke-ppa-chasse');
+    if (btnRevokePpaChasse) { 
+        btnRevokePpaChasse.addEventListener('click', () => { 
+            if (currentCitizenData) { 
+                currentCitizenData.ppaChasse = (currentCitizenData.ppaChasse === "Oui") ? "Non" : "Oui"; 
+                MDT_Database.sync(); 
+                updateCitizenUI(currentCitizenData); 
+            } 
+        }); 
+    }
 
-    // Édition Profil Citoyen
+    const btnRemoveWanted = document.getElementById('menu-remove-wanted');
+    if (btnRemoveWanted) { 
+        btnRemoveWanted.addEventListener('click', () => { 
+            if (currentCitizenData) { 
+                currentCitizenData.wanted = !currentCitizenData.wanted; 
+                MDT_Database.sync(); 
+                updateCitizenUI(currentCitizenData); 
+                updateDashboardWanted(); // Mise à jour instantanée du tableau de bord
+            } 
+        }); 
+    }
+
+    // Gérer l'ouverture du menu de modification du citoyen
     const btnEditCitizenMenu = document.getElementById('btn-edit-citizen-menu');
-    if (btnEditCitizenMenu) btnEditCitizenMenu.addEventListener('click', (e) => { e.stopPropagation(); document.getElementById('edit-citizen-context-menu').classList.toggle('hidden'); });
+    if (btnEditCitizenMenu) {
+        btnEditCitizenMenu.addEventListener('click', (e) => { 
+            e.stopPropagation(); 
+            const menu = document.getElementById('edit-citizen-context-menu');
+            if (menu) {
+                menu.classList.toggle('hidden'); 
+            }
+        });
+    }
 
+    // Remplir la modale d'édition
     function fillEditModalData() {
         if (currentCitizenData) {
             document.getElementById('edit-firstname').value = currentCitizenData.firstname;
@@ -859,24 +1235,26 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    if(document.getElementById('menu-edit-info')) {
-        document.getElementById('menu-edit-info').addEventListener('click', () => {
-            fillEditModalData();
-            document.getElementById('edit-section-info').classList.remove('hidden');
-            document.getElementById('edit-section-photo').classList.add('hidden');
+    const menuEditInfo = document.getElementById('menu-edit-info');
+    if (menuEditInfo) { 
+        menuEditInfo.addEventListener('click', () => { 
+            fillEditModalData(); 
+            document.getElementById('edit-section-info').classList.remove('hidden'); 
+            document.getElementById('edit-section-photo').classList.add('hidden'); 
             document.getElementById('edit-modal-main-title').innerHTML = `Modifier les informations - <span style="color:var(--accent-primary);">${currentCitizenData.firstname} ${currentCitizenData.lastname}</span>`;
-            openModal('modal-citizen-edit');
-        });
+            openModal('modal-citizen-edit'); 
+        }); 
     }
-
-    if(document.getElementById('menu-edit-photo')) {
-        document.getElementById('menu-edit-photo').addEventListener('click', () => {
-            fillEditModalData();
-            document.getElementById('edit-section-info').classList.add('hidden');
-            document.getElementById('edit-section-photo').classList.remove('hidden');
+    
+    const menuEditPhoto = document.getElementById('menu-edit-photo');
+    if (menuEditPhoto) { 
+        menuEditPhoto.addEventListener('click', () => { 
+            fillEditModalData(); 
+            document.getElementById('edit-section-info').classList.add('hidden'); 
+            document.getElementById('edit-section-photo').classList.remove('hidden'); 
             document.getElementById('edit-modal-main-title').innerHTML = `Modifier la photo - <span style="color:var(--accent-primary);">${currentCitizenData.firstname} ${currentCitizenData.lastname}</span>`;
-            openModal('modal-citizen-edit');
-        });
+            openModal('modal-citizen-edit'); 
+        }); 
     }
 
     const btnSaveEdit = document.getElementById('btn-save-edit');
@@ -900,143 +1278,945 @@ document.addEventListener('DOMContentLoaded', () => {
                 currentCitizenData.permisConduire = document.getElementById('edit-permis-conduire').value;
                 
                 const editPhotoPreview = document.getElementById('edit-photo-preview');
-                if(editPhotoPreview && editPhotoPreview.src) currentCitizenData.avatar = editPhotoPreview.src;
-
-                updateCitizenUI(currentCitizenData);
-                renderCitizenList(document.getElementById('search-citizen-input') ? document.getElementById('search-citizen-input').value : ''); 
-                updateDashboardWanted();
+                if (editPhotoPreview && editPhotoPreview.src) {
+                    currentCitizenData.avatar = editPhotoPreview.src;
+                }
+                
+                MDT_Database.sync();
                 closeModals();
             }
         });
     }
 
-    // Logique Rapport d'arrestation dans la fiche Citoyen (existant)
+    // --------------------------------------------------------
+    // AJOUTS DEPUIS LA FICHE (Rapports, Plaintes, Mandats, Tickets)
+    // --------------------------------------------------------
     let arrestImagesList = [];
     let editingRapportIndex = null;
+
     function renderArrestImages() {
         const container = document.getElementById('arrest-photos-container');
-        if(!container) return;
+        if (!container) return;
+        
         container.innerHTML = '';
         arrestImagesList.forEach(imgSrc => {
             const img = document.createElement('img');
-            img.src = imgSrc;
-            img.style.width = '70px';
-            img.style.height = '70px';
-            img.style.objectFit = 'cover';
-            img.style.borderRadius = '4px';
+            img.src = imgSrc; 
+            img.style.width = '70px'; 
+            img.style.height = '70px'; 
+            img.style.objectFit = 'cover'; 
+            img.style.borderRadius = '4px'; 
             img.style.border = '2px solid var(--accent-primary)';
             container.appendChild(img);
         });
     }
 
-    if(document.getElementById('btn-open-arrest-citizen')) {
-        document.getElementById('btn-open-arrest-citizen').addEventListener('click', () => { /* Logique fiche citoyen */ });
-    }
-
     function openEditRapport(index) {
         editingRapportIndex = index;
         const rapport = currentCitizenData.rapports[index];
-        // ... (Logique inchangée pour édition rapport citoyen)
+        
+        document.getElementById('arrest-date').value = rapport.date; 
+        document.getElementById('arrest-station').value = rapport.station;
+        document.getElementById('arrest-officiers').value = rapport.officiers; 
+        document.getElementById('arrest-avocat').value = rapport.avocat;
+        document.getElementById('arrest-possessions').value = rapport.possessions; 
+        document.getElementById('arrest-text').value = rapport.text;
+        document.getElementById('arrest-charges').value = rapport.charges; 
+        document.getElementById('arrest-fine').value = rapport.fine;
+        document.getElementById('arrest-time').value = rapport.time; 
+        
+        arrestImagesList = [...rapport.images];
+        renderArrestImages(); 
+        openModal('modal-arrest-report');
     }
 
-    // Autres (Plaintes, Mandats, Tickets) => Logique conservée
+    const btnOpenArrestCitizen = document.getElementById('btn-open-arrest-citizen');
+    if (btnOpenArrestCitizen) {
+        btnOpenArrestCitizen.addEventListener('click', () => {
+            if (!currentCitizenData) return;
+            arrestImagesList = []; 
+            document.getElementById('arrest-photos-container').innerHTML = '';
+            
+            document.querySelectorAll('#modal-arrest-report input, #modal-arrest-report textarea').forEach(i => {
+                i.value = '';
+            });
+            
+            openModal('modal-arrest-report');
+        });
+    }
+
+    const btnSubmitArrest = document.getElementById('btn-submit-arrest');
+    if (btnSubmitArrest) {
+        btnSubmitArrest.addEventListener('click', () => {
+            if (!currentCitizenData) return;
+            
+            const r = {
+                date: document.getElementById('arrest-date').value, 
+                station: document.getElementById('arrest-station').value,
+                officiers: document.getElementById('arrest-officiers').value, 
+                avocat: document.getElementById('arrest-avocat').value,
+                possessions: document.getElementById('arrest-possessions').value, 
+                text: document.getElementById('arrest-text').value,
+                charges: document.getElementById('arrest-charges').value, 
+                fine: document.getElementById('arrest-fine').value,
+                time: document.getElementById('arrest-time').value, 
+                images: [...arrestImagesList]
+            };
+
+            if (!r.date || !r.text || !r.charges) {
+                alert("Les champs avec * sont requis.");
+                return;
+            }
+
+            if (editingRapportIndex !== null) {
+                currentCitizenData.rapports[editingRapportIndex] = r;
+            } else {
+                currentCitizenData.rapports.unshift(r);
+                
+                // Ajoute également dans la base de données globale des opérations
+                MDT_Database.data.opReports.push({ 
+                    id: '#ARR-' + Date.now(), 
+                    type: 'Arrestation', 
+                    redacteur: currentUserProfile.name, 
+                    date: r.date, 
+                    lieu: r.station, 
+                    text: r.text, 
+                    officiers: r.officiers, 
+                    images: r.images, 
+                    dossier: '' 
+                });
+            }
+            
+            MDT_Database.sync(); 
+            
+            const tabRapports = document.querySelector('.tab-link[data-tab="rapports"]');
+            if (tabRapports) tabRapports.click();
+            
+            closeModals();
+        });
+    }
+
     let plainteImagesList = [];
-    if(document.getElementById('btn-open-plainte')) {
-        document.getElementById('btn-open-plainte').addEventListener('click', () => {
-            if(!currentCitizenData) return;
-            plainteImagesList = [];
-            document.querySelectorAll('#modal-plainte input').forEach(i => i.value='');
-            document.getElementById('plainte-text').value = '';
+    const btnOpenPlainteCitizen = document.getElementById('btn-open-plainte-citizen');
+    
+    if (btnOpenPlainteCitizen) {
+        btnOpenPlainteCitizen.addEventListener('click', () => {
+            if (!currentCitizenData) return;
+            
+            plainteImagesList = []; 
             document.getElementById('plainte-photos-container').innerHTML = '';
-            openModal('modal-plainte');
-        });
-    }
-    if (document.getElementById('btn-submit-plainte')) {
-        document.getElementById('btn-submit-plainte').addEventListener('click', () => {
-            if(!currentCitizenData) return;
-            const date = document.getElementById('plainte-date').value;
-            const raison = document.getElementById('plainte-raison').value;
-            const contre = document.getElementById('plainte-contre').value;
-            const text = document.getElementById('plainte-text').value;
-            if(!date || !raison || !contre || !text) return alert("Champs * obligatoires.");
-            if (!currentCitizenData.plaintes) currentCitizenData.plaintes = [];
-            currentCitizenData.plaintes.unshift({ date, raison, contre, text, officiers: document.getElementById('plainte-officiers').value || "Non précisé", avocat: document.getElementById('plainte-avocat').value || "", images: [...plainteImagesList] });
-            currentActiveTab = 'plaintes';
-            document.querySelectorAll('.tab-link').forEach(t => t.classList.toggle('active', t.getAttribute('data-tab') === 'plaintes'));
-            updateCitizenUI(currentCitizenData); closeModals();
+            
+            document.querySelectorAll('#modal-plainte-create input, #modal-plainte-create textarea').forEach(i => {
+                i.value = '';
+            });
+            openModal('modal-plainte-create');
         });
     }
 
-    if (document.getElementById('btn-submit-mandat')) {
-        document.getElementById('btn-submit-mandat').addEventListener('click', () => {
+    const btnSubmitPlainte = document.getElementById('btn-submit-plainte');
+    if (btnSubmitPlainte) {
+        btnSubmitPlainte.addEventListener('click', () => {
+            const p = {
+                id: '#PL-' + Math.floor(Math.random() * 9000), 
+                date: document.getElementById('plainte-date').value, 
+                contre: document.getElementById('plainte-contre').value,
+                raison: document.getElementById('plainte-raison').value, 
+                text: document.getElementById('plainte-text').value, 
+                officiers: document.getElementById('plainte-officiers').value,
+                avocat: document.getElementById('plainte-avocat').value, 
+                images: [...plainteImagesList], 
+                author: currentUserProfile.name
+            };
+
+            if (!p.date || !p.raison || !p.text || !p.contre) {
+                alert("Les champs avec * sont obligatoires.");
+                return;
+            }
+            
+            MDT_Database.data.plaintes.unshift(p); 
+            
+            if (currentCitizenData && !document.getElementById('view-mes-plaintes').classList.contains('active')) {
+                currentCitizenData.plaintes.unshift(p); 
+            }
+            
+            MDT_Database.sync(); 
+            
+            if (currentCitizenData) { 
+                const pt = document.querySelector('.tab-link[data-tab="plaintes"]'); 
+                if (pt) pt.click(); 
+            } 
+            
+            closeModals();
+        });
+    }
+
+    const btnSubmitTicket = document.getElementById('btn-submit-ticket');
+    if (btnSubmitTicket) {
+        btnSubmitTicket.addEventListener('click', () => {
             if (!currentCitizenData) return;
-            const date = document.getElementById('mandat-date').value;
-            const motif = document.getElementById('mandat-motif').value;
-            if (!date || !motif) return alert("Date et Motif requis.");
-            if (!currentCitizenData.mandats) currentCitizenData.mandats = [];
-            currentCitizenData.mandats.unshift({ date, officiers: document.getElementById('mandat-officiers').value || "Non précisé", motif, desc: document.getElementById('mandat-desc').value || "Aucune description." });
-            document.querySelectorAll('.tab-link').forEach(t => t.classList.remove('active'));
-            document.querySelector('.tab-link[data-tab="mandats"]').classList.add('active');
-            currentActiveTab = 'mandats'; renderTabContent('mandats'); closeModals();
+            
+            const t = { 
+                date: document.getElementById('ticket-date').value, 
+                lieu: document.getElementById('ticket-lieu').value, 
+                infraction: document.getElementById('ticket-infraction').value, 
+                amende: document.getElementById('ticket-amende').value, 
+                points: document.getElementById('ticket-points').value, 
+                officiers: document.getElementById('ticket-officiers').value 
+            };
+            
+            if (!t.date || !t.infraction) {
+                alert("Les champs avec * sont requis.");
+                return;
+            }
+            
+            currentCitizenData.tickets.unshift(t); 
+            MDT_Database.sync(); 
+            
+            const tabTickets = document.querySelector('.tab-link[data-tab="tickets"]');
+            if (tabTickets) tabTickets.click(); 
+            
+            closeModals();
         });
     }
 
-    if (document.getElementById('btn-submit-ticket')) {
-        document.getElementById('btn-submit-ticket').addEventListener('click', () => {
+    const btnSubmitMandat = document.getElementById('btn-submit-mandat');
+    if (btnSubmitMandat) {
+        btnSubmitMandat.addEventListener('click', () => {
             if (!currentCitizenData) return;
-            const date = document.getElementById('ticket-date').value;
-            const infraction = document.getElementById('ticket-infraction').value;
-            if (!date || !infraction) return alert("Date et Infraction requises.");
-            if (!currentCitizenData.tickets) currentCitizenData.tickets = [];
-            currentCitizenData.tickets.unshift({ date, lieu: document.getElementById('ticket-lieu').value || "Non précisé", infraction, amende: document.getElementById('ticket-amende').value || "0", points: document.getElementById('ticket-points').value || "0", officiers: document.getElementById('ticket-officiers').value || "Non précisé" });
-            document.querySelectorAll('.tab-link').forEach(t => t.classList.remove('active'));
-            document.querySelector('.tab-link[data-tab="tickets"]').classList.add('active');
-            currentActiveTab = 'tickets'; renderTabContent('tickets'); closeModals();
+            
+            const m = { 
+                date: document.getElementById('mandat-date').value, 
+                officiers: document.getElementById('mandat-officiers').value, 
+                motif: document.getElementById('mandat-motif').value, 
+                desc: document.getElementById('mandat-desc').value 
+            };
+            
+            if (!m.date || !m.motif) {
+                alert("Les champs avec * sont requis.");
+                return;
+            }
+            
+            currentCitizenData.mandats.unshift(m); 
+            MDT_Database.sync(); 
+            
+            const tabMandats = document.querySelector('.tab-link[data-tab="mandats"]');
+            if (tabMandats) tabMandats.click(); 
+            
+            closeModals();
         });
     }
 
-    // ==========================================
-    // 9. GESTION DES IMAGES GLOBALES (CTRL+V)
-    // ==========================================
+
+    // ========================================================================
+    // 7. REGISTRE DES ARMES
+    // ========================================================================
+    function renderArmesList() {
+        const container = document.getElementById('armes-list-container');
+        if (!container) return;
+        
+        container.innerHTML = '';
+        const armes = MDT_Database.data.armes || [];
+        
+        armes.forEach(arme => {
+            let badgeHtml = arme.statut === "Légal" ? `<span class="badge success">Légal</span>` : `<span class="badge danger">${arme.statut}</span>`;
+            let delitHtml = arme.delit ? `<span class="badge danger">OUI</span>` : `<span class="badge success">NON</span>`;
+            
+            container.innerHTML += `
+                <tr class="expandable-row" data-target="details-arme-${arme.id}" style="cursor: pointer;">
+                    <td style="width: 30px;"><i class="fa-solid fa-chevron-right toggle-icon" style="transition: 0.3s;"></i></td>
+                    <td>Le ${arme.date}</td>
+                    <td>${arme.serie}</td>
+                    <td>${arme.modele}</td>
+                    <td>${badgeHtml}</td>
+                    <td><button class="btn-icon"><i class="fa-solid fa-eye"></i></button></td>
+                </tr>
+                <tr id="details-arme-${arme.id}" class="hidden nested-row">
+                    <td colspan="6" style="padding: 0; border: none;">
+                        <div style="background: var(--bg-input); padding: 20px; border-bottom: 1px solid var(--border-color); display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                            <div>
+                                <p style="font-size: 0.75rem; color: var(--text-muted); margin-bottom: 5px;">ORIGINE :</p>
+                                <p style="margin-bottom: 15px; color:white;">${arme.origine}</p>
+                                
+                                <p style="font-size: 0.75rem; color: var(--text-muted); margin-bottom: 5px;">POLICIER ASSIGNÉ :</p>
+                                <p style="margin-bottom: 15px; color: var(--accent-primary); font-weight: 600;">${arme.officier}</p>
+                                
+                                <p style="font-size: 0.75rem; color: var(--text-muted); margin-bottom: 5px;">LIÉ À UN DÉLIT :</p>
+                                <p>${delitHtml}</p>
+                            </div>
+                            <div>
+                                <p style="font-size: 0.75rem; color: var(--text-muted); margin-bottom: 5px;">RAISON ENCODAGE :</p>
+                                <p style="margin-bottom: 15px; color:white;">${arme.motifs || "Aucune"}</p>
+                                
+                                <p style="font-size: 0.75rem; color: var(--text-muted); margin-bottom: 5px;">CITOYEN LIÉ :</p>
+                                <p style="margin-bottom: 15px; color:white;">${arme.citoyen || "Non assigné"}</p>
+                            </div>
+                        </div>
+                    </td>
+                </tr>
+            `;
+        });
+        
+        setupExpandableRows(container);
+    }
+
+    const btnSubmitArme = document.getElementById('btn-submit-arme');
+    if (btnSubmitArme) {
+        btnSubmitArme.addEventListener('click', () => {
+            const newArme = {
+                id: Date.now(), 
+                date: document.getElementById('arme-date').value || new Date().toLocaleString(),
+                origine: document.getElementById('arme-origine').value, 
+                modele: document.getElementById('arme-modele').value,
+                serie: document.getElementById('arme-serie').value, 
+                motifs: document.getElementById('arme-motifs').value,
+                citoyen: document.getElementById('arme-citoyen').value, 
+                delit: document.getElementById('arme-delit').checked,
+                officier: currentUserProfile.grade + " | " + currentUserProfile.name, 
+                statut: document.getElementById('arme-citoyen').value ? "Saisie" : "Légal"
+            };
+            
+            if (!newArme.origine || !newArme.modele || !newArme.serie) {
+                alert("Les champs obligatoires avec * ne sont pas remplis.");
+                return;
+            }
+            
+            MDT_Database.data.armes.unshift(newArme); 
+            MDT_Database.sync(); 
+            closeModals();
+        });
+    }
+
+
+    // ========================================================================
+    // 8. REGISTRES : BRACELETS ÉLECTRONIQUES
+    // ========================================================================
+    function renderBraceletsList(filterTerm = '') {
+        const container = document.getElementById('bracelets-list-container');
+        if (!container) return;
+        
+        container.innerHTML = '';
+        const bracelets = MDT_Database.data.bracelets || [];
+        const filtered = bracelets.filter(b => b.citoyen.toLowerCase().includes(filterTerm.toLowerCase()));
+
+        filtered.forEach(b => {
+            container.innerHTML += `
+                <tr class="expandable-row" data-target="details-bracelet-${b.id}" style="cursor: pointer;">
+                    <td style="width: 30px;"><i class="fa-solid fa-chevron-right toggle-icon" style="transition: 0.3s;"></i></td>
+                    <td><strong>${b.citoyen}</strong></td>
+                    <td>${b.officier}</td>
+                    <td><span style="color:var(--warning); font-weight:600;">${b.npre}</span></td>
+                    <td>${b.dateExpire}</td>
+                    <td><button class="btn-icon"><i class="fa-solid fa-eye"></i></button></td>
+                </tr>
+                <tr id="details-bracelet-${b.id}" class="hidden nested-row">
+                    <td colspan="6" style="padding: 0; border: none;">
+                        <div style="background: var(--bg-input); padding: 20px; border-bottom: 1px solid var(--border-color); display: flex; gap: 40px;">
+                            <div>
+                                <p style="font-size: 0.75rem; color: var(--text-muted); margin-bottom: 5px;">DATE DE POSE</p>
+                                <p style="margin-bottom: 15px; color:white;">Le ${b.datePose}</p>
+                            </div>
+                            <div style="flex: 1;">
+                                <p style="font-size: 0.75rem; color: var(--text-muted); margin-bottom: 5px;">MOTIFS</p>
+                                <p style="background: var(--bg-card); padding: 10px; border-radius: 4px; border: 1px solid var(--border-color); color:white;">${b.motifs}</p>
+                            </div>
+                        </div>
+                    </td>
+                </tr>
+            `;
+        });
+        
+        setupExpandableRows(container);
+    }
+
+    const searchBraceletInput = document.getElementById('search-bracelet-input');
+    if (searchBraceletInput) {
+        searchBraceletInput.addEventListener('input', (e) => {
+            renderBraceletsList(e.target.value);
+        });
+    }
+
+    const btnSubmitBracelet = document.getElementById('btn-submit-bracelet');
+    if (btnSubmitBracelet) {
+        btnSubmitBracelet.addEventListener('click', () => {
+            const b = {
+                id: Date.now(), 
+                citoyen: document.getElementById('bracelet-citoyen').value, 
+                officier: document.getElementById('bracelet-officier').value,
+                npre: document.getElementById('bracelet-npre').value, 
+                datePose: document.getElementById('bracelet-date-pose').value,
+                dateExpire: document.getElementById('bracelet-date-expire').value, 
+                motifs: document.getElementById('bracelet-motifs').value
+            };
+            
+            if (!b.citoyen || !b.npre || !b.officier) {
+                alert("Les champs avec un * sont obligatoires.");
+                return;
+            }
+            
+            MDT_Database.data.bracelets.unshift(b); 
+            MDT_Database.sync(); 
+            closeModals();
+        });
+    }
+
+
+    // ========================================================================
+    // 9. REGISTRES : VÉHICULES EN INFRACTION (EX-SABOTS)
+    // ========================================================================
+    let currentVehiculeImage = null;
+
+    function renderVehiculesList(filterTerm = '') {
+        const container = document.getElementById('vehicules-list-container');
+        if (!container) return;
+        
+        container.innerHTML = '';
+        const vehicules = MDT_Database.data.vehicules || [];
+        const filtered = vehicules.filter(v => v.plaque.toLowerCase().includes(filterTerm.toLowerCase()));
+
+        filtered.forEach(v => {
+            container.innerHTML += `
+                <tr class="expandable-row" data-target="details-vehicule-${v.id}" style="cursor: pointer;">
+                    <td style="width: 30px;"><i class="fa-solid fa-chevron-right toggle-icon" style="transition: 0.3s;"></i></td>
+                    <td>${v.type}</td>
+                    <td><strong>${v.plaque}</strong></td>
+                    <td>Le ${v.date}</td>
+                    <td>1</td>
+                    <td><button class="btn-icon"><i class="fa-solid fa-eye"></i></button></td>
+                </tr>
+                <tr id="details-vehicule-${v.id}" class="hidden nested-row">
+                    <td colspan="6" style="padding: 0; border: none;">
+                        <div style="background: var(--bg-input); padding: 20px; border-bottom: 1px solid var(--border-color);">
+                            <p style="font-size: 0.75rem; color: var(--text-muted); margin-bottom: 10px;">PROPRIÉTAIRE ACTUEL</p>
+                            <p style="margin-bottom: 15px; color:white;"><strong>${v.proprio || 'Inconnu'}</strong></p>
+                            
+                            <div style="display: flex; gap: 20px; flex-wrap: wrap;">
+                                <div style="flex: 1; min-width: 200px;">
+                                    <p style="font-size: 0.75rem; color: var(--text-muted); margin-bottom: 5px;">FAITS LIÉS</p>
+                                    <div style="background: var(--bg-card); padding: 10px; border-radius: 4px; border: 1px solid var(--border-color);">
+                                        <p style="color: white; margin-bottom: 5px;">${v.infraction}</p>
+                                        <div style="display:flex; gap:10px;">
+                                            ${v.rapport ? `<span class="badge" style="background: rgba(92, 84, 237, 0.2); color: #a5b4fc;">Rapport: ${v.rapport}</span>` : ''}
+                                            ${v.dossier ? `<span class="badge" style="background: rgba(245, 158, 11, 0.2); color: #fcd34d;">Preuves: ${v.dossier}</span>` : ''}
+                                        </div>
+                                    </div>
+                                </div>
+                                ${v.photo ? `<div style="flex: 1; min-width: 200px;"><p style="font-size: 0.75rem; color: var(--text-muted); margin-bottom: 5px;">PREUVE PHOTO</p><img src="${v.photo}" style="height: 100px; border-radius: 4px; border: 1px solid var(--border-color);"></div>` : ''}
+                            </div>
+                        </div>
+                    </td>
+                </tr>
+            `;
+        });
+        
+        setupExpandableRows(container);
+    }
+
+    const searchVehiculeInput = document.getElementById('search-vehicule-input');
+    if (searchVehiculeInput) {
+        searchVehiculeInput.addEventListener('input', (e) => {
+            renderVehiculesList(e.target.value);
+        });
+    }
+
+    const btnSubmitVehicule = document.getElementById('btn-submit-vehicule');
+    if (btnSubmitVehicule) {
+        btnSubmitVehicule.addEventListener('click', () => {
+            const v = {
+                id: Date.now(), 
+                date: new Date().toLocaleString(), 
+                type: document.getElementById('vehicule-type').value,
+                plaque: document.getElementById('vehicule-plaque').value.toUpperCase(), 
+                infraction: document.getElementById('vehicule-infraction').value,
+                proprio: document.getElementById('vehicule-proprio').value, 
+                rapport: document.getElementById('vehicule-rapport').value,
+                dossier: document.getElementById('vehicule-dossier').value, 
+                photo: currentVehiculeImage, 
+                author: currentUserProfile.name
+            };
+            
+            if (!v.type || !v.plaque || !v.infraction) {
+                alert("Les champs avec * sont obligatoires.");
+                return;
+            }
+            
+            MDT_Database.data.vehicules.unshift(v); 
+            currentVehiculeImage = null; 
+            
+            const photoContainer = document.getElementById('vehicule-photos-container');
+            if (photoContainer) photoContainer.innerHTML = '';
+            
+            MDT_Database.sync(); 
+            closeModals();
+        });
+    }
+
+
+    // ========================================================================
+    // 10. PREUVES & DOSSIERS PHOTOS
+    // ========================================================================
+    let currentOpenDossierId = null;
+
+    function renderPreuvesDossiers(filterTerm = '') {
+        const container = document.getElementById('dossiers-container');
+        if (!container) return;
+        
+        container.innerHTML = '';
+        const dossiersPreuves = MDT_Database.data.dossiersPreuves || [];
+        const filtered = dossiersPreuves.filter(d => d.name.toLowerCase().includes(filterTerm.toLowerCase()));
+
+        filtered.forEach(d => {
+            container.innerHTML += `
+                <div class="dossier-card cursor-pointer" data-id="${d.id}" style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 8px; padding: 20px; text-align: center; transition: 0.2s;">
+                    <i class="fa-solid fa-folder-open" style="font-size: 3rem; color: var(--accent-primary); margin-bottom: 15px;"></i>
+                    <h4 style="color: white; font-size: 1rem; margin-bottom: 5px; text-transform: uppercase;">${d.name}</h4>
+                    <p style="color: var(--text-muted); font-size: 0.8rem;">${d.images ? d.images.length : 0} photo(s)</p>
+                    <p style="color: var(--text-muted); font-size: 0.75rem; margin-top: 5px;">Par ${d.author}</p>
+                </div>
+            `;
+        });
+
+        container.querySelectorAll('.dossier-card').forEach(card => {
+            card.addEventListener('mouseover', () => {
+                card.style.borderColor = 'var(--accent-primary)';
+            });
+            card.addEventListener('mouseout', () => {
+                card.style.borderColor = 'var(--border-color)';
+            });
+            
+            card.addEventListener('click', () => {
+                currentOpenDossierId = Number(card.getAttribute('data-id'));
+                document.getElementById('preuves-list-state').classList.add('hidden');
+                document.getElementById('preuves-open-state').classList.remove('hidden');
+                
+                const dossier = MDT_Database.data.dossiersPreuves.find(d => d.id === currentOpenDossierId);
+                if (dossier) {
+                    document.getElementById('opened-dossier-title').textContent = dossier.name;
+                    document.getElementById('opened-dossier-meta').textContent = `Créé le ${dossier.date} par ${dossier.author}`;
+                    renderDossierImages();
+                }
+            });
+        });
+    }
+
+    const searchDossierInput = document.getElementById('search-dossier-input');
+    if (searchDossierInput) {
+        searchDossierInput.addEventListener('input', (e) => {
+            renderPreuvesDossiers(e.target.value);
+        });
+    }
+
+    const btnSubmitDossier = document.getElementById('btn-submit-dossier');
+    if (btnSubmitDossier) {
+        btnSubmitDossier.addEventListener('click', () => {
+            const name = document.getElementById('dossier-name').value;
+            if (!name) {
+                alert("Le nom du dossier est requis.");
+                return;
+            }
+            
+            MDT_Database.data.dossiersPreuves.unshift({ 
+                id: Date.now(), 
+                name: name, 
+                date: new Date().toLocaleDateString(), 
+                author: currentUserProfile.name, 
+                images: [] 
+            });
+            MDT_Database.sync(); 
+            closeModals();
+        });
+    }
+
+    function renderDossierImages() {
+        const container = document.getElementById('opened-dossier-photos');
+        if (!container) return;
+        
+        container.innerHTML = '';
+        const dossier = MDT_Database.data.dossiersPreuves.find(d => d.id === currentOpenDossierId);
+        
+        if (dossier && dossier.images) {
+            dossier.images.forEach((img, idx) => {
+                container.innerHTML += `
+                    <div style="position: relative; border: 2px solid var(--border-color); border-radius: 4px; overflow: hidden;">
+                        <img src="${img}" style="height: 180px; width: auto; max-width: 100%; object-fit: contain;">
+                        <button class="btn-icon danger" onclick="deleteImageFromDossier(${idx})" style="position: absolute; top: 5px; right: 5px; background: rgba(0,0,0,0.7); border: none;">
+                            <i class="fa-solid fa-trash" style="color: #ef4444;"></i>
+                        </button>
+                    </div>
+                `;
+            });
+        }
+    }
+
+    window.deleteImageFromDossier = function(idx) {
+        if (confirm("Voulez-vous vraiment supprimer cette photo ?")) {
+            const dossier = MDT_Database.data.dossiersPreuves.find(d => d.id === currentOpenDossierId);
+            if (dossier && dossier.images) {
+                dossier.images.splice(idx, 1);
+            }
+            MDT_Database.sync(); 
+            renderDossierImages();
+        }
+    };
+
+    const btnCloseDossier = document.getElementById('btn-close-dossier');
+    if (btnCloseDossier) {
+        btnCloseDossier.addEventListener('click', () => {
+            currentOpenDossierId = null;
+            document.getElementById('preuves-list-state').classList.remove('hidden');
+            document.getElementById('preuves-open-state').classList.add('hidden');
+            MDT_Database.sync();
+        });
+    }
+
+
+    // ========================================================================
+    // 11. MES DOSSIERS (Interrogatoires, Plaintes, Incidents)
+    // ========================================================================
+    
+    // Fonction qui génère dynamiquement n'importe quel tableau 
+    // (C'est grâce à ça que le code est plus court, mais tout aussi puissant !)
+    function generateTableRows(dataArray, columns, showAuthor = false, type = '') {
+        let html = '';
+        dataArray.forEach(item => {
+            html += `<tr style="position:relative;">`;
+            
+            // Colonnes dynamiques
+            columns.forEach(col => { 
+                html += `<td>${item[col] || '-'}</td>`; 
+            });
+            
+            // Affichage de l'auteur (si demandé)
+            if (showAuthor) {
+                html += `<td>${item.author || item.redacteur || '-'}</td>`;
+            }
+            
+            // Trois petits points pour les options de suppression
+            html += `
+                <td style="text-align:right;">
+                    <i class="fa-solid fa-ellipsis-vertical cursor-pointer row-options" style="padding: 5px; color:var(--text-muted);" data-id="${item.id}"></i>
+                    <div class="context-menu hidden row-menu" id="menu-row-${item.id}" style="right: 30px; top: 10px; width:150px; text-align:left;">
+                        <button class="menu-item danger btn-delete-row" data-id="${item.id}" data-type="${type}">
+                            <i class="fa-solid fa-trash"></i> Supprimer
+                        </button>
+                    </div>
+                </td>
+            </tr>`;
+        });
+        return html;
+    }
+
+    // Connecte les menus contextuels des tableaux générés
+    function setupRowMenus(container) {
+        container.querySelectorAll('.row-options').forEach(opt => {
+            opt.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const id = opt.getAttribute('data-id');
+                const menu = document.getElementById(`menu-row-${id}`);
+                
+                document.querySelectorAll('.row-menu').forEach(m => { 
+                    if(m !== menu) m.classList.add('hidden'); 
+                });
+                
+                if (menu) menu.classList.toggle('hidden');
+            });
+        });
+        
+        container.querySelectorAll('.btn-delete-row').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                if (confirm("Supprimer définitivement cet élément ?")) {
+                    const id = btn.getAttribute('data-id');
+                    const type = btn.getAttribute('data-type');
+                    
+                    // Suppression de la base de données
+                    MDT_Database.data[type] = MDT_Database.data[type].filter(item => item.id !== id);
+                    MDT_Database.sync();
+                }
+            });
+        });
+    }
+
+    // --- MES INTERROGATOIRES ---
+    function renderMesInterrogatoires() {
+        const container = document.getElementById('mes-interrogatoires-list'); 
+        if (!container) return;
+        
+        const interrogatoires = MDT_Database.data.interrogatoires || [];
+        const myInterros = interrogatoires.filter(i => i.author === currentUserProfile.name);
+        
+        container.innerHTML = generateTableRows(myInterros, ['id', 'date', 'citoyen'], false, 'interrogatoires');
+        setupRowMenus(container);
+    }
+
+    const btnSubmitInterrogatoire = document.getElementById('btn-submit-interrogatoire');
+    if (btnSubmitInterrogatoire) {
+        btnSubmitInterrogatoire.addEventListener('click', () => {
+            const i = {
+                id: '#INT-' + Math.floor(Math.random() * 9000), 
+                date: new Date().toLocaleString(), 
+                citoyen: document.getElementById('inter-citoyen').value,
+                debut: document.getElementById('inter-debut').value, 
+                fin: document.getElementById('inter-fin').value, 
+                presents: document.getElementById('inter-presents').value,
+                poste: document.getElementById('inter-poste').value, 
+                text: document.getElementById('inter-text').value, 
+                author: currentUserProfile.name
+            };
+            MDT_Database.data.interrogatoires.unshift(i); 
+            MDT_Database.sync(); 
+            closeModals();
+        });
+    }
+
+    // --- MES PLAINTES ---
+    function renderMesPlaintes() {
+        const container = document.getElementById('mes-plaintes-list'); 
+        if (!container) return;
+        
+        const plaintes = MDT_Database.data.plaintes || [];
+        const myPlaintes = plaintes.filter(p => p.author === currentUserProfile.name);
+        
+        container.innerHTML = generateTableRows(myPlaintes, ['id', 'date', 'contre', 'raison'], false, 'plaintes');
+        setupRowMenus(container);
+    }
+
+    // --- MES RAPPORTS D'INCIDENT ---
+    function renderMesIncidents() {
+        const container = document.getElementById('mes-incidents-list'); 
+        if (!container) return;
+        
+        const incidents = MDT_Database.data.incidents || [];
+        const myIncidents = incidents.filter(i => i.author === currentUserProfile.name);
+        
+        container.innerHTML = generateTableRows(myIncidents, ['id', 'date', 'titre'], false, 'incidents');
+        setupRowMenus(container);
+    }
+
+    const btnSubmitIncident = document.getElementById('btn-submit-incident');
+    if (btnSubmitIncident) {
+        btnSubmitIncident.addEventListener('click', () => {
+            const i = {
+                id: '#INC-' + Math.floor(Math.random() * 9000), 
+                date: document.getElementById('incident-date').value, 
+                titre: document.getElementById('incident-titre').value,
+                officiers: document.getElementById('incident-officiers').value, 
+                text: document.getElementById('incident-text').value, 
+                author: currentUserProfile.name
+            };
+            MDT_Database.data.incidents.unshift(i); 
+            MDT_Database.sync(); 
+            closeModals();
+        });
+    }
+
+
+    // ========================================================================
+    // 12. SUPERVISEUR (Vues globales & Statistiques)
+    // ========================================================================
+    
+    function renderSupArrestations() {
+        const container = document.getElementById('sup-arrestations-list'); 
+        if (!container) return;
+        
+        const opReports = MDT_Database.data.opReports || [];
+        const arr = opReports.filter(r => r.id.startsWith('#ARR'));
+        
+        container.innerHTML = generateTableRows(arr, ['id', 'date', 'lieu'], true, 'opReports'); 
+        setupRowMenus(container);
+    }
+
+    function renderSupInterrogatoires() {
+        const container = document.getElementById('sup-interrogatoires-list'); 
+        if (!container) return;
+        
+        const interrogatoires = MDT_Database.data.interrogatoires || [];
+        container.innerHTML = generateTableRows(interrogatoires, ['id', 'date', 'citoyen'], true, 'interrogatoires');
+        setupRowMenus(container);
+    }
+
+    function renderSupIncidents() {
+        const container = document.getElementById('sup-incidents-list'); 
+        if (!container) return;
+        
+        const incidents = MDT_Database.data.incidents || [];
+        container.innerHTML = generateTableRows(incidents, ['id', 'date', 'titre'], true, 'incidents');
+        setupRowMenus(container);
+    }
+
+    // --- Statistiques des Agents ---
+    function renderAgentStatsList(filterTerm = '') {
+        const container = document.getElementById('stats-agents-list');
+        if (!container) return;
+        
+        container.innerHTML = '';
+        
+        const effectifs = MDT_Database.data.effectifs || [];
+        const filtered = effectifs.filter(a => {
+            const name = `${a.firstname} ${a.lastname}`.toLowerCase();
+            return name.includes(filterTerm.toLowerCase());
+        });
+
+        filtered.forEach((agent, index) => {
+            container.innerHTML += `
+                <div class="citoyen-list-item" data-index="${index}">
+                    <div class="citoyen-list-info">
+                        <h4 style="color:white;">${agent.firstname} ${agent.lastname}</h4>
+                        <span>${agent.grade}</span>
+                    </div>
+                </div>
+            `;
+        });
+
+        // Afficher les statistiques de l'agent sélectionné
+        container.querySelectorAll('.citoyen-list-item').forEach(item => {
+            item.addEventListener('click', () => {
+                document.querySelectorAll('#stats-agents-list .citoyen-list-item').forEach(i => {
+                    i.classList.remove('active');
+                });
+                item.classList.add('active');
+                
+                const agentIndex = item.getAttribute('data-index');
+                renderAgentStatsDetails(filtered[agentIndex]);
+            });
+        });
+    }
+
+    const searchStatsAgent = document.getElementById('search-stats-agent');
+    if (searchStatsAgent) {
+        searchStatsAgent.addEventListener('input', (e) => {
+            renderAgentStatsList(e.target.value);
+        });
+    }
+
+    function renderAgentStatsDetails(agent) {
+        document.getElementById('stats-empty-state').classList.add('hidden');
+        document.getElementById('stats-details-state').classList.remove('hidden');
+        
+        const fullName = `${agent.firstname} ${agent.lastname}`;
+        
+        document.getElementById('stat-agent-name').textContent = fullName;
+        document.getElementById('stat-agent-grade').textContent = agent.grade;
+
+        // Récupération de la donnée
+        const citoyens = MDT_Database.data.citoyens || [];
+        const plaintes = MDT_Database.data.plaintes || [];
+        const opReports = MDT_Database.data.opReports || [];
+        const incidents = MDT_Database.data.incidents || [];
+        const armes = MDT_Database.data.armes || [];
+        const interrogatoires = MDT_Database.data.interrogatoires || [];
+        const vehicules = MDT_Database.data.vehicules || [];
+        const bracelets = MDT_Database.data.bracelets || [];
+
+        let stats = {
+            mandat: 0, 
+            ticket: 0, 
+            arrestation: 0, 
+            plainte: plaintes.filter(p => p.author === fullName).length,
+            operation: opReports.filter(r => r.redacteur === fullName).length,
+            incident: incidents.filter(i => i.author === fullName).length,
+            arme: armes.filter(a => a.officier.includes(agent.lastname)).length,
+            interrogatoire: interrogatoires.filter(i => i.author === fullName).length,
+            sabot: vehicules.filter(v => v.author === fullName).length,
+            bracelet: bracelets.filter(b => b.officier.includes(agent.lastname)).length
+        };
+
+        // Fouiller dans chaque citoyen pour compter les mandats, tickets, arrestations
+        citoyens.forEach(c => {
+            if (c.mandats) {
+                stats.mandat += c.mandats.filter(m => m.officiers.includes(agent.lastname)).length;
+            }
+            if (c.tickets) {
+                stats.ticket += c.tickets.filter(t => t.officiers.includes(agent.lastname)).length;
+            }
+            if (c.rapports) {
+                stats.arrestation += c.rapports.filter(r => r.officiers.includes(agent.lastname)).length;
+            }
+        });
+
+        const grid = document.getElementById('stat-agent-grid');
+        grid.innerHTML = '';
+        
+        // Fonction pour générer une carte de stat
+        const buildCard = (label, value) => {
+            return `<div class="admin-stat-card">
+                        <h3>${label}</h3>
+                        <span class="big-num" style="font-size:2rem;">${value}</span>
+                    </div>`;
+        };
+        
+        grid.innerHTML += buildCard("Rapports d'opération", stats.operation);
+        grid.innerHTML += buildCard("Rapports d'arrestation", stats.arrestation);
+        grid.innerHTML += buildCard("Tickets routiers", stats.ticket);
+        grid.innerHTML += buildCard("Plaintes encodées", stats.plainte);
+        grid.innerHTML += buildCard("Interrogatoires", stats.interrogatoire);
+        grid.innerHTML += buildCard("Mandats demandés", stats.mandat);
+        grid.innerHTML += buildCard("Rapports d'incident", stats.incident);
+        grid.innerHTML += buildCard("Armes saisies", stats.arme);
+        grid.innerHTML += buildCard("Bracelets posés", stats.bracelet);
+        grid.innerHTML += buildCard("Véhicules infraction", stats.sabot);
+    }
+
+
+    // ========================================================================
+    // 13. GESTION DES IMAGES GLOBALES (CTRL+V)
+    // ========================================================================
     const uploadBoxes = document.querySelectorAll('.upload-box');
+    
     uploadBoxes.forEach(box => {
+        // Rend la zone cliquable et capable de recevoir le focus pour CTRL+V
         box.setAttribute('tabindex', '0'); 
-        box.addEventListener('click', () => box.focus());
+        
+        box.addEventListener('click', () => {
+            box.focus();
+        });
 
         box.addEventListener('paste', function(e) {
             e.preventDefault();
             const items = (e.clipboardData || e.originalEvent.clipboardData).items;
+            
             for (let i = 0; i < items.length; i++) {
                 if (items[i].type.indexOf('image') !== -1) {
                     const blob = items[i].getAsFile();
                     const reader = new FileReader();
+                    
                     reader.onload = function(event) {
+                        const imgData = event.target.result;
+                        const imgHTML = `<img src="${imgData}" style="width:70px; height:70px; object-fit:cover; border-radius:4px; border:2px solid var(--accent-primary);">`;
                         
-                        if (box.id === 'op-upload-box') { // Rapport d'Opération Global
-                            currentOpReportImages.push(event.target.result);
-                            const container = document.getElementById('op-photos-container');
-                            const img = document.createElement('img');
-                            img.src = event.target.result;
-                            img.style.width = '70px'; img.style.height = '70px'; img.style.objectFit = 'cover'; img.style.borderRadius = '4px'; img.style.border = '2px solid var(--accent-primary)';
-                            container.appendChild(img);
+                        // Répartit l'image selon la boîte active
+                        if (box.id === 'op-upload-box') { 
+                            currentOpReportImages.push(imgData);
+                            document.getElementById('op-photos-container').innerHTML += imgHTML;
                         }
-                        else if (box.id === 'arrest-upload-box') { // Rapport Arrestation Citoyen
-                            arrestImagesList.push(event.target.result);
-                            renderArrestImages(); 
+                        else if (box.id === 'arrest-upload-box') { 
+                            arrestImagesList.push(imgData);
+                            document.getElementById('arrest-photos-container').innerHTML += imgHTML;
                         } 
                         else if (box.id === 'plainte-upload-box') {
-                            plainteImagesList.push(event.target.result);
-                            const container = document.getElementById('plainte-photos-container');
-                            const img = document.createElement('img'); img.src = event.target.result; img.style.width = '70px'; img.style.height = '70px'; img.style.objectFit = 'cover'; img.style.borderRadius = '4px'; img.style.border = '2px solid var(--accent-primary)';
-                            container.appendChild(img);
+                            plainteImagesList.push(imgData);
+                            document.getElementById('plainte-photos-container').innerHTML += imgHTML;
                         }
                         else if (box.id === 'create-upload-box') {
                             const preview = document.getElementById('create-photo-preview');
-                            if(preview) preview.src = event.target.result;
+                            if(preview) preview.src = imgData;
                         }
                         else if (box.closest('#modal-citizen-edit')) {
                             const preview = document.getElementById('edit-photo-preview');
-                            if(preview) preview.src = event.target.result;
+                            if(preview) preview.src = imgData;
+                        }
+                        else if (box.id === 'vehicule-upload-box') {
+                            currentVehiculeImage = imgData;
+                            document.getElementById('vehicule-photos-container').innerHTML = `<img src="${currentVehiculeImage}" style="height:80px; object-fit:cover; border-radius:4px; border:2px solid var(--accent-primary);">`;
+                        }
+                        else if (box.id === 'dossier-upload-box' && currentOpenDossierId !== null) {
+                            const dossiers = MDT_Database.data.dossiersPreuves || [];
+                            const dossier = dossiers.find(d => d.id === currentOpenDossierId);
+                            if (dossier) {
+                                if (!dossier.images) dossier.images = [];
+                                dossier.images.push(imgData);
+                                MDT_Database.sync();
+                                renderDossierImages();
+                            }
                         }
                     };
                     reader.readAsDataURL(blob);
@@ -1045,34 +2225,79 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 
-    // ==========================================
-    // 10. INITIALISATION AU DÉMARRAGE
-    // ==========================================
-    renderCitizenList();
-    renderEffectifsList();
-    renderPoles();
-    renderOpReportsList();
-    updateDashboardWanted();
-});
 
-// ==========================================
-// 11. FONCTIONS GLOBALES (MODALES)
-// ==========================================
-function openModal(modalId) {
-    const modal = document.getElementById(modalId);
-    if(modal) modal.classList.remove('hidden');
-}
+    // ========================================================================
+    // 14. FONCTIONS UTILITAIRES (MODALES ET CLICS GLOBAUX)
+    // ========================================================================
+    
+    // Fonction d'ouverture d'une modale
+    window.openModal = function(modalId) {
+        const modal = document.getElementById(modalId);
+        if (modal) {
+            modal.classList.remove('hidden');
+        }
+    }
 
-function closeModals() {
-    document.querySelectorAll('.modal-overlay').forEach(modal => {
-        modal.classList.add('hidden');
+    // Fonction de fermeture de toutes les modales
+    window.closeModals = function() {
+        document.querySelectorAll('.modal-overlay').forEach(modal => {
+            modal.classList.add('hidden');
+        });
+        
+        // Ferme également tous les menus contextuels (les 3 petits points)
+        document.querySelectorAll('.context-menu').forEach(menu => {
+            menu.classList.add('hidden');
+        });
+    }
+
+    // Fonction pour activer l'ouverture des lignes de tableaux (Flèche)
+    function setupExpandableRows(container) {
+        container.querySelectorAll('.expandable-row').forEach(row => {
+            row.addEventListener('click', () => {
+                const targetId = row.getAttribute('data-target');
+                const detailsRow = document.getElementById(targetId);
+                const icon = row.querySelector('.toggle-icon');
+                
+                detailsRow.classList.toggle('hidden');
+                
+                if (detailsRow.classList.contains('hidden')) {
+                    icon.style.transform = 'rotate(0deg)';
+                } else {
+                    icon.style.transform = 'rotate(90deg)';
+                }
+            });
+        });
+    }
+
+    // Gestion globale des clics sur la page
+    document.addEventListener('click', (e) => {
+        // Clic sur l'overlay sombre = ferme la modale
+        if (e.target.classList.contains('modal-overlay')) {
+            closeModals();
+        }
+        
+        // Ferme les menus contextuels si on clique à l'extérieur
+        const isClickInsideMenuOption = (
+            e.target.closest('.pole-options') || 
+            e.target.closest('.op-list-options') || 
+            e.target.closest('.profile-edit-container') || 
+            e.target.closest('.rapport-options') || 
+            e.target.closest('.row-options')
+        );
+
+        if (!isClickInsideMenuOption) {
+            document.querySelectorAll('.context-menu').forEach(menu => {
+                menu.classList.add('hidden');
+            });
+        }
     });
-}
 
-document.addEventListener('click', (e) => {
-    if(e.target.classList.contains('modal-overlay')) closeModals();
-});
+    // Gestion des touches du clavier
+    document.addEventListener('keydown', (e) => {
+        // Touche Echap = ferme la modale
+        if (e.key === 'Escape') {
+            closeModals();
+        }
+    });
 
-document.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape') closeModals();
 });

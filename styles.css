@@ -746,3 +746,15 @@
     grid-template-columns: repeat(3, 1fr);
     gap: 15px;
 }
+
+/* ==========================================================================
+   LIGNES DÉROULANTES TABLEAUX (Expandable Rows)
+   ========================================================================== */
+.expandable-row:hover td {
+    background-color: var(--bg-hover) !important;
+}
+
+.nested-row td {
+    background-color: transparent !important;
+    padding: 0;
+}

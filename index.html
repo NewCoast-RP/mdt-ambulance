@@ -20,7 +20,7 @@
             <div class="login-body">
                 <div class="input-group mb-3">
                     <label>Identifiant de service</label>
-                    <input type="text" id="login-username" placeholder="Ex: SASP, EMS ou DOJ">
+                    <input type="text" id="login-username" placeholder="Ex: officier">
                 </div>
                 <div class="input-group mb-3">
                     <label>Mot de passe</label>
@@ -37,6 +37,7 @@
     </div>
 
     <div class="mdt-wrapper hidden" id="mdt-app">
+        
         <aside class="sidebar">
             <div class="sidebar-header">
                 <img src="https://static.wikia.nocookie.net/morelife/images/7/7f/LSPD-logo.png/revision/latest?cb=20240305013722&path-prefix=fr" alt="SASP Logo" class="dept-logo">
@@ -48,7 +49,8 @@
             
             <div class="sidebar-scroll">
                 <nav class="sidebar-nav">
-                    <div class="nav-section">
+                    
+                    <div class="nav-section" data-section="general">
                         <div class="nav-section-title collapsible">
                             Général <i class="fa-solid fa-chevron-up"></i>
                         </div>
@@ -60,22 +62,19 @@
                         </ul>
                     </div>
 
-                    <div class="nav-section">
+                    <div class="nav-section" data-section="registres">
                         <div class="nav-section-title collapsible">
                             Registres <i class="fa-solid fa-chevron-down"></i>
                         </div>
                         <ul class="nav-list collapsed">
                             <li class="nav-item" data-target="rapports">Rapports d'opération</li>
-                            <li class="nav-item" data-target="plaintes">Registre des plaintes</li>
                             <li class="nav-item" data-target="armes">Registre des armes</li>
-                            <li class="nav-item" data-target="delits">Registre des délits</li>
                             <li class="nav-item" data-target="bracelets">Registre des bracelets</li>
-                            <li class="nav-item" data-target="sabots">Registre des sabots</li>
                             <li class="nav-item" data-target="vehicules">Véhicules en infraction</li>
                         </ul>
                     </div>
 
-                    <div class="nav-section">
+                    <div class="nav-section" data-section="preuves">
                         <div class="nav-section-title collapsible">
                             Preuves <i class="fa-solid fa-chevron-down"></i>
                         </div>
@@ -84,48 +83,41 @@
                         </ul>
                     </div>
 
-                    <div class="nav-section">
+                    <div class="nav-section" data-section="mes_dossiers">
                         <div class="nav-section-title collapsible">
                             Mes dossiers <i class="fa-solid fa-chevron-down"></i>
                         </div>
                         <ul class="nav-list collapsed">
-                            <li class="nav-item">Mes plaintes</li>
-                            <li class="nav-item">Mes interrogatoires</li>
-                            <li class="nav-item">Mes rapports d'incident</li>
+                            <li class="nav-item" data-target="mes-plaintes">Mes plaintes</li>
+                            <li class="nav-item" data-target="mes-interrogatoires">Mes interrogatoires</li>
+                            <li class="nav-item" data-target="mes-incidents">Mes rapports d'incident</li>
                         </ul>
                     </div>
 
-                    <div class="nav-section">
-                        <div class="nav-section-title collapsible">
-                            Police academy <i class="fa-solid fa-chevron-down"></i>
-                        </div>
-                        <ul class="nav-list collapsed">
-                            <li class="nav-item">Suivi rookie</li>
-                            <li class="nav-item">Sessions</li>
-                            <li class="nav-item">Questions test final</li>
-                            <li class="nav-item">Template critères</li>
-                        </ul>
-                    </div>
-
-                    <div class="nav-section">
+                    <div class="nav-section" data-section="superviseur">
                         <div class="nav-section-title collapsible">
                             Superviseur <i class="fa-solid fa-chevron-down"></i>
                         </div>
                         <ul class="nav-list collapsed">
-                            <li class="nav-item">Liste des rapports d'arrestation</li>
-                            <li class="nav-item">Statistiques des agents</li>
+                            <li class="nav-item" data-target="sup-arrestations">Liste des rapports d'arrestation</li>
+                            <li class="nav-item" data-target="sup-interrogatoires">Liste des interrogatoires</li>
+                            <li class="nav-item" data-target="sup-incidents">Liste des rapports d'incident</li>
+                            <li class="nav-item" data-target="statistiques">Statistiques des agents</li>
                         </ul>
                     </div>
+
                 </nav>
             </div>
 
             <div class="sidebar-footer">
-                <button class="btn-sidebar">Section MCD</button>
-                <button class="btn-sidebar admin" data-target="admin">Panel admin / staff</button>
                 <div class="user-card">
                     <div class="user-meta">
-                        <span class="user-name">DEV Photon <i class="fa-solid fa-gear" id="btn-settings" style="cursor: pointer; margin-left: 5px;" title="Mon Profil"></i> <i class="fa-solid fa-power-off" id="btn-logout" style="cursor: pointer; margin-left: 5px;" title="Se déconnecter"></i></span>
-                        <span class="user-rank">SASP - Matricule: 21</span>
+                        <span class="user-name">
+                            Chargement... 
+                            <i class="fa-solid fa-gear" id="btn-settings" style="cursor: pointer; margin-left: 5px;" title="Mon Profil"></i> 
+                            <i class="fa-solid fa-power-off" id="btn-logout" style="cursor: pointer; margin-left: 5px;" title="Se déconnecter"></i>
+                        </span>
+                        <span class="user-rank">Grade - Matricule</span>
                     </div>
                 </div>
             </div>
@@ -165,8 +157,7 @@
                         </div>
                         <button class="btn-primary w-full mb-4" onclick="openModal('modal-citizen-create')">Encoder un citoyen</button>
                         
-                        <div class="citoyen-list" id="citoyen-list-container">
-                            </div>
+                        <div class="citoyen-list" id="citoyen-list-container"></div>
                     </div>
 
                     <div class="citoyen-main">
@@ -174,16 +165,16 @@
                             <p class="text-muted">Sélectionnez un citoyen pour afficher sa fiche.</p>
                         </div>
 
-                        <div class="profile-panel h-full flex-col hidden" id="citoyen-profile-state">
+                        <div class="profile-panel h-full flex-col hidden" id="citoyen-profile-state" style="overflow-y: auto;">
                             <div class="profile-top">
                                 <img src="" alt="Avatar" class="profile-avatar" id="profile-main-avatar">
                                 <div class="profile-titles">
                                     <div style="display: flex; align-items: center; gap: 10px;">
-                                        <h2 id="profile-name">PHOTON DEV</h2>
+                                        <h2 id="profile-name">NOM PRENOM</h2>
                                         <span id="profile-wanted-label" class="badge danger">WANTED</span>
                                     </div>
-                                    <span class="profile-discord" id="profile-email">&lt;discord.gg/newcaast@mail.fr&gt;</span>
-                                    <p class="profile-date" id="profile-phone-date">12/01/2000 | 555-53421</p>
+                                    <span class="profile-discord" id="profile-email">&lt;email&gt;</span>
+                                    <p class="profile-date" id="profile-phone-date">Date | Tel</p>
                                 </div>
                                 
                                 <div class="profile-edit-container ms-auto">
@@ -199,27 +190,27 @@
                             </div>
 
                             <div class="profile-stats-grid">
-                                <div class="stat-item"><label>Poids</label><span id="profile-poids">89</span></div>
-                                <div class="stat-item"><label>Taille</label><span id="profile-taille">189</span></div>
-                                <div class="stat-item"><label>Sexe</label><span id="profile-gender">Homme</span></div>
-                                <div class="stat-item"><label>Adresse</label><span id="profile-address">Vinewood</span></div>
-                                <div class="stat-item"><label>Ethnie</label><span id="profile-ethnie">Caucasienne</span></div>
-                                <div class="stat-item"><label>Cheveux</label><span id="profile-hair">Noir</span></div>
-                                <div class="stat-item"><label>Yeux</label><span id="profile-eyes">Bleu</span></div>
-                                <div class="stat-item"><label>Appartenance</label><span id="profile-appartenance">Aucune</span></div>
-                                <div class="stat-item"><label>Emploi</label><span id="profile-job">Concess</span></div>
-                                <div class="stat-item"><label>Permis de conduire</label><span id="stat-permis">Valide</span></div>
-                                <div class="stat-item"><label>PPA Civil</label><span id="stat-ppa-civil">Oui</span></div>
-                                <div class="stat-item"><label>PPA Chasse</label><span id="stat-ppa-chasse">Non</span></div>
-                                <div class="stat-item"><label>Décédé</label><span id="stat-decede">Non</span></div>
-                                <div class="stat-item"><label>Wanted</label><span id="stat-wanted">Oui</span></div>
+                                <div class="stat-item"><label>Poids</label><span id="profile-poids">-</span></div>
+                                <div class="stat-item"><label>Taille</label><span id="profile-taille">-</span></div>
+                                <div class="stat-item"><label>Sexe</label><span id="profile-gender">-</span></div>
+                                <div class="stat-item"><label>Adresse</label><span id="profile-address">-</span></div>
+                                <div class="stat-item"><label>Ethnie</label><span id="profile-ethnie">-</span></div>
+                                <div class="stat-item"><label>Cheveux</label><span id="profile-hair">-</span></div>
+                                <div class="stat-item"><label>Yeux</label><span id="profile-eyes">-</span></div>
+                                <div class="stat-item"><label>Appartenance</label><span id="profile-appartenance">-</span></div>
+                                <div class="stat-item"><label>Emploi</label><span id="profile-job">-</span></div>
+                                <div class="stat-item"><label>Permis de conduire</label><span id="stat-permis">-</span></div>
+                                <div class="stat-item"><label>PPA Civil</label><span id="stat-ppa-civil">-</span></div>
+                                <div class="stat-item"><label>PPA Chasse</label><span id="stat-ppa-chasse">-</span></div>
+                                <div class="stat-item"><label>Décédé</label><span id="stat-decede">-</span></div>
+                                <div class="stat-item"><label>Wanted</label><span id="stat-wanted">-</span></div>
                             </div>
 
                             <div class="profile-actions-row mb-4">
                                 <button class="btn-action-small" onclick="openModal('modal-mandat')">Mandat</button>
                                 <button class="btn-action-small" onclick="openModal('modal-ticket')">Ticket routier</button>
-                                <button class="btn-action-small" id="btn-open-arrest">Rapport arrestation</button>
-                                <button class="btn-action-small" id="btn-open-plainte">Plainte</button>
+                                <button class="btn-action-small" id="btn-open-arrest-citizen">Rapport arrestation</button>
+                                <button class="btn-action-small" id="btn-open-plainte-citizen">Plainte</button>
                             </div>
 
                             <div class="profile-nav">
@@ -229,11 +220,9 @@
                                 <button class="tab-link" data-tab="plaintes">Plaintes</button>
                             </div>
 
-                            <div class="profile-content" id="profile-content-area">
-                                </div>
+                            <div class="profile-content" id="profile-content-area"></div>
                         </div>
                     </div>
-
                 </div>
             </div>
 
@@ -247,8 +236,7 @@
                         </div>
                     </div>
                     <div class="panel-body no-pad flex-1" style="overflow-y: auto;">
-                        <div class="effectifs-list" id="effectifs-list-container" style="padding: 10px;">
-                            </div>
+                        <div class="effectifs-list" id="effectifs-list-container" style="padding: 10px;"></div>
                     </div>
                 </div>
             </div>
@@ -258,18 +246,12 @@
                     <h2>Pôles / spécialités</h2>
                     <button class="btn-primary" id="btn-open-pole-modal">Ajouter un pôle</button>
                 </div>
-                
-                <div id="poles-empty-state" class="text-muted mt-4 text-center hidden">
-                    Il n'y a aucun pôle de créé actuellement.
-                </div>
-
-                <div class="poles-grid mt-4" id="poles-container" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 20px;">
-                    </div>
+                <div id="poles-empty-state" class="text-muted mt-4 text-center hidden">Il n'y a aucun pôle de créé actuellement.</div>
+                <div class="poles-grid mt-4" id="poles-container" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 20px;"></div>
             </div>
 
             <div class="view-page" id="view-rapports">
                 <div class="citoyen-layout h-full">
-                    
                     <div class="citoyen-sidebar">
                         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
                             <h3 style="color:white; margin:0; font-size: 1.1rem;">Rapports d'opération</h3>
@@ -277,21 +259,14 @@
                         </div>
                         <div class="search-container w-full mb-3">
                             <i class="fa-solid fa-magnifying-glass"></i>
-                            <input type="text" id="search-op-report-input" placeholder="Rechercher un numéro de rapport...">
+                            <input type="text" id="search-op-report-input" placeholder="Rechercher un rapport...">
                         </div>
-                        <div class="citoyen-list" id="op-report-list-container">
-                            </div>
+                        <div class="citoyen-list" id="op-report-list-container"></div>
                     </div>
-
                     <div class="citoyen-main">
-                        <div class="citoyen-empty" id="op-report-empty-state">
-                            <p class="text-muted">Sélectionnez un rapport pour afficher ses informations.</p>
-                        </div>
-                        
-                        <div class="profile-panel h-full flex-col hidden" id="op-report-details-state" style="padding: 25px; overflow-y: auto;">
-                            </div>
+                        <div class="citoyen-empty" id="op-report-empty-state"><p class="text-muted">Sélectionnez un rapport pour l'afficher.</p></div>
+                        <div class="profile-panel h-full flex-col hidden" id="op-report-details-state" style="padding: 25px; overflow-y: auto;"></div>
                     </div>
-
                 </div>
             </div>
 
@@ -304,6 +279,7 @@
                     <table class="mdt-table">
                         <thead>
                             <tr>
+                                <th></th>
                                 <th>DATE D'ENREGISTREMENT</th>
                                 <th>N° DE SÉRIE</th>
                                 <th>MODÈLE</th>
@@ -311,50 +287,262 @@
                                 <th>ACTIONS</th>
                             </tr>
                         </thead>
-                        <tbody>
-                            <tr>
-                                <td>Le 29/03/2026 à 20:44:00</td>
-                                <td>654K362312A</td>
-                                <td>Glock</td>
-                                <td><span class="badge success">Légal</span></td>
-                                <td><button class="btn-icon"><i class="fa-solid fa-eye"></i></button></td>
-                            </tr>
-                        </tbody>
+                        <tbody id="armes-list-container"></tbody>
                     </table>
                 </div>
             </div>
 
-            <div class="view-page" id="view-admin">
+            <div class="view-page" id="view-bracelets">
                 <div class="page-header">
-                    <div>
-                        <h2>PANEL ADMINISTRATION / STAFF</h2>
-                        <p class="text-muted">Centre de gestion global du MDT.</p>
+                    <h2>Liste des bracelets électroniques</h2>
+                    <button class="btn-primary" onclick="openModal('modal-bracelet-create')">Encoder un bracelet</button>
+                </div>
+                <div class="search-container mb-4">
+                    <i class="fa-solid fa-magnifying-glass"></i>
+                    <input type="text" id="search-bracelet-input" placeholder="Rechercher un citoyen...">
+                </div>
+                <div class="table-container">
+                    <table class="mdt-table">
+                        <thead>
+                            <tr>
+                                <th></th>
+                                <th>CITOYEN</th>
+                                <th>OFFICIER POSEUR</th>
+                                <th>CODE NPRE</th>
+                                <th>EXPIRE LE</th>
+                                <th>ACTIONS</th>
+                            </tr>
+                        </thead>
+                        <tbody id="bracelets-list-container"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="view-page" id="view-vehicules">
+                <div class="page-header">
+                    <h2>Registre des véhicules en infraction</h2>
+                    <button class="btn-primary" onclick="openModal('modal-vehicule-create')">Ajouter un véhicule</button>
+                </div>
+                <div class="search-container mb-4">
+                    <i class="fa-solid fa-magnifying-glass"></i>
+                    <input type="text" id="search-vehicule-input" placeholder="Rechercher une plaque...">
+                </div>
+                <div class="table-container">
+                    <table class="mdt-table">
+                        <thead>
+                            <tr>
+                                <th></th>
+                                <th>TYPE</th>
+                                <th>PLAQUE</th>
+                                <th>ENREGISTRÉ LE</th>
+                                <th>FAITS</th>
+                                <th>ACTIONS</th>
+                            </tr>
+                        </thead>
+                        <tbody id="vehicules-list-container"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="view-page" id="view-preuves">
+                
+                <div id="preuves-list-state" class="h-full flex-col">
+                    <div class="page-header">
+                        <h2>Dossiers photos / preuves</h2>
+                        <button class="btn-primary" onclick="openModal('modal-dossier-create')">Créer un dossier</button>
                     </div>
-                    <button class="btn-secondary" data-target="accueil">Retour MDT</button>
+                    <div class="search-container mb-4">
+                        <i class="fa-solid fa-magnifying-glass"></i>
+                        <input type="text" id="search-dossier-input" placeholder="Rechercher un dossier...">
+                    </div>
+                    <div class="dossiers-grid" id="dossiers-container" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 20px;">
+                        </div>
                 </div>
                 
-                <div class="admin-stats-grid">
-                    <div class="admin-stat-card"><h3>Utilisateurs</h3><span class="big-num">3</span></div>
-                    <div class="admin-stat-card"><h3>Charges / Délits</h3><span class="big-num">92</span></div>
-                    <div class="admin-stat-card"><h3>Grades</h3><span class="big-num">3</span></div>
-                    <div class="admin-stat-card"><h3>Templates</h3><span class="big-num">1</span></div>
+                <div id="preuves-open-state" class="h-full flex-col hidden">
+                    <div class="page-header" style="border-bottom: 1px solid var(--border-color); padding-bottom: 15px;">
+                        <div>
+                            <h2 id="opened-dossier-title">Nom du dossier</h2>
+                            <p class="text-muted" id="opened-dossier-meta">Créé le ...</p>
+                        </div>
+                        <div style="display: flex; gap: 10px;">
+                            <button class="btn-secondary" id="btn-close-dossier">Retour</button>
+                        </div>
+                    </div>
+                    <div class="upload-box flex-1 mt-4 mb-4" id="dossier-upload-box" style="min-height: 150px; display: flex; flex-direction: column; align-items: center; justify-content: center;">
+                        <i class="fa-solid fa-image" style="font-size: 2rem; margin-bottom: 10px;"></i>
+                        <p>Coller une image (CTRL + V) pour l'ajouter au dossier</p>
+                    </div>
+                    <div id="opened-dossier-photos" style="display: flex; gap: 15px; flex-wrap: wrap; overflow-y: auto; padding: 10px 0;"></div>
                 </div>
 
-                <div class="admin-modules-grid mt-4">
-                    <div class="admin-module">
-                        <h4>Utilisateurs</h4>
-                        <p>Gérer les accès, les comptes actifs et les profils staff.</p>
-                        <button class="btn-primary-outline">Ouvrir les utilisateurs</button>
+            </div>
+
+            <div class="view-page" id="view-mes-interrogatoires">
+                <div class="page-header">
+                    <h2>Mes interrogatoires</h2>
+                    <button class="btn-primary" onclick="openModal('modal-interrogatoire-create')">Créer un interrogatoire</button>
+                </div>
+                <div class="search-container mb-4">
+                    <i class="fa-solid fa-magnifying-glass"></i>
+                    <input type="text" id="search-mes-interrogatoires" placeholder="Rechercher un interrogatoire...">
+                </div>
+                <div class="table-container">
+                    <table class="mdt-table">
+                        <thead>
+                            <tr>
+                                <th>NUMÉRO</th>
+                                <th>DATE</th>
+                                <th>NOM / PRÉNOM</th>
+                                <th>ACTIONS</th>
+                            </tr>
+                        </thead>
+                        <tbody id="mes-interrogatoires-list"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="view-page" id="view-mes-plaintes">
+                <div class="page-header">
+                    <h2>Mes plaintes</h2>
+                    <button class="btn-primary" onclick="openModal('modal-plainte-create')">Encoder une plainte</button>
+                </div>
+                <div class="search-container mb-4">
+                    <i class="fa-solid fa-magnifying-glass"></i>
+                    <input type="text" id="search-mes-plaintes" placeholder="Rechercher une plainte...">
+                </div>
+                <div class="table-container">
+                    <table class="mdt-table">
+                        <thead>
+                            <tr>
+                                <th>NUMÉRO</th>
+                                <th>DATE</th>
+                                <th>CONTRE</th>
+                                <th>RAISON</th>
+                                <th>ACTIONS</th>
+                            </tr>
+                        </thead>
+                        <tbody id="mes-plaintes-list"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="view-page" id="view-mes-incidents">
+                <div class="page-header">
+                    <h2>Mes rapports d'incident</h2>
+                    <button class="btn-primary" onclick="openModal('modal-incident-create')">Créer un rapport d'incident</button>
+                </div>
+                <div class="search-container mb-4">
+                    <i class="fa-solid fa-magnifying-glass"></i>
+                    <input type="text" id="search-mes-incidents" placeholder="Rechercher un rapport...">
+                </div>
+                <div class="table-container">
+                    <table class="mdt-table">
+                        <thead>
+                            <tr>
+                                <th>NUMÉRO</th>
+                                <th>DATE</th>
+                                <th>TITRE DE L'INCIDENT</th>
+                                <th>ACTIONS</th>
+                            </tr>
+                        </thead>
+                        <tbody id="mes-incidents-list"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="view-page" id="view-sup-arrestations">
+                <div class="page-header">
+                    <h2>Liste globale des rapports d'arrestation</h2>
+                </div>
+                <div class="search-container mb-4">
+                    <i class="fa-solid fa-magnifying-glass"></i>
+                    <input type="text" id="search-sup-arrestations" placeholder="Rechercher...">
+                </div>
+                <div class="table-container">
+                    <table class="mdt-table">
+                        <thead>
+                            <tr>
+                                <th>NUMÉRO</th>
+                                <th>DATE</th>
+                                <th>CITOYEN ARRÊTÉ</th>
+                                <th>OFFICIER</th>
+                                <th>ACTIONS</th>
+                            </tr>
+                        </thead>
+                        <tbody id="sup-arrestations-list"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="view-page" id="view-sup-interrogatoires">
+                <div class="page-header">
+                    <h2>Liste globale des interrogatoires</h2>
+                </div>
+                <div class="search-container mb-4">
+                    <i class="fa-solid fa-magnifying-glass"></i>
+                    <input type="text" id="search-sup-interrogatoires" placeholder="Rechercher...">
+                </div>
+                <div class="table-container">
+                    <table class="mdt-table">
+                        <thead>
+                            <tr>
+                                <th>NUMÉRO</th>
+                                <th>DATE</th>
+                                <th>CITOYEN INTERROGÉ</th>
+                                <th>OFFICIER</th>
+                                <th>ACTIONS</th>
+                            </tr>
+                        </thead>
+                        <tbody id="sup-interrogatoires-list"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="view-page" id="view-sup-incidents">
+                <div class="page-header">
+                    <h2>Liste globale des rapports d'incident</h2>
+                </div>
+                <div class="search-container mb-4">
+                    <i class="fa-solid fa-magnifying-glass"></i>
+                    <input type="text" id="search-sup-incidents" placeholder="Rechercher...">
+                </div>
+                <div class="table-container">
+                    <table class="mdt-table">
+                        <thead>
+                            <tr>
+                                <th>NUMÉRO</th>
+                                <th>DATE</th>
+                                <th>TITRE</th>
+                                <th>OFFICIER</th>
+                                <th>ACTIONS</th>
+                            </tr>
+                        </thead>
+                        <tbody id="sup-incidents-list"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="view-page" id="view-statistiques">
+                <div class="citoyen-layout h-full">
+                    <div class="citoyen-sidebar">
+                        <div class="search-container w-full mb-3">
+                            <i class="fa-solid fa-magnifying-glass"></i>
+                            <input type="text" id="search-stats-agent" placeholder="Rechercher un agent...">
+                        </div>
+                        <div class="citoyen-list" id="stats-agents-list"></div>
                     </div>
-                    <div class="admin-module">
-                        <h4>Charges / Délits</h4>
-                        <p>Mettre à jour les charges, les amendes et les peines de prison.</p>
-                        <button class="btn-primary-outline">Ouvrir les charges</button>
-                    </div>
-                    <div class="admin-module">
-                        <h4>Pôles / Spécialités</h4>
-                        <p>Configurer les divisions (CRIME, HP, etc.)</p>
-                        <button class="btn-primary-outline">Ouvrir la config</button>
+                    <div class="citoyen-main">
+                        <div class="citoyen-empty" id="stats-empty-state">
+                            <p class="text-muted">Sélectionnez un agent pour voir ses statistiques.</p>
+                        </div>
+                        <div class="profile-panel h-full flex-col hidden" id="stats-details-state" style="overflow-y: auto;">
+                            <h2 id="stat-agent-name" class="mb-1" style="font-size: 1.8rem;">NOM DE L'AGENT</h2>
+                            <p class="text-muted mb-4" id="stat-agent-grade" style="font-size: 0.9rem;">GRADE</p>
+                            
+                            <div class="admin-stats-grid" style="grid-template-columns: repeat(3, 1fr);" id="stat-agent-grid">
+                                </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -369,7 +557,6 @@
                 <button class="btn-close" onclick="closeModals()"><i class="fa-solid fa-xmark"></i></button>
             </div>
             <div class="modal-body">
-                
                 <div class="photo-edit-area mb-3">
                     <p>Photo du citoyen (sans lunettes) *</p>
                     <div class="photo-edit-wrapper">
@@ -379,36 +566,81 @@
                         </div>
                     </div>
                 </div>
-
                 <div class="alert-warning mb-3">
-                    <i class="fa-solid fa-triangle-exclamation"></i> Merci de faire attention à l'orthographe et aux informations que vous rentrez.
+                    <i class="fa-solid fa-triangle-exclamation"></i> Attention à l'orthographe.
                 </div>
-                
                 <div class="form-grid-2">
-                    <div class="input-group"><label>Prénom *</label><input type="text" id="create-firstname" placeholder="Prénom"></div>
-                    <div class="input-group"><label>Nom *</label><input type="text" id="create-lastname" placeholder="Nom"></div>
-                    <div class="input-group"><label>Téléphone *</label><input type="text" id="create-phone" placeholder="555-XXXX"></div>
-                    <div class="input-group"><label>Date de naissance *</label><input type="date" id="create-birthdate"></div>
-                    <div class="input-group"><label>Genre</label><select id="create-gender"><option>Homme</option><option>Femme</option></select></div>
-                    <div class="input-group"><label>Email *</label><input type="email" id="create-email" placeholder="mail@ls.com"></div>
-                    <div class="input-group"><label>Poids</label><input type="number" id="create-poids" placeholder="kg"></div>
-                    <div class="input-group"><label>Taille</label><input type="number" id="create-taille" placeholder="cm"></div>
-                    <div class="input-group"><label>Adresse</label><input type="text" id="create-address" placeholder="Quartier/Rue"></div>
+                    <div class="input-group">
+                        <label>Prénom *</label>
+                        <input type="text" id="create-firstname">
+                    </div>
+                    <div class="input-group">
+                        <label>Nom *</label>
+                        <input type="text" id="create-lastname">
+                    </div>
+                    <div class="input-group">
+                        <label>Téléphone *</label>
+                        <input type="text" id="create-phone">
+                    </div>
+                    <div class="input-group">
+                        <label>Date de naissance *</label>
+                        <input type="date" id="create-birthdate">
+                    </div>
+                    <div class="input-group">
+                        <label>Genre</label>
+                        <select id="create-gender">
+                            <option>Homme</option>
+                            <option>Femme</option>
+                        </select>
+                    </div>
+                    <div class="input-group">
+                        <label>Email *</label>
+                        <input type="email" id="create-email">
+                    </div>
+                    <div class="input-group">
+                        <label>Poids</label>
+                        <input type="number" id="create-poids">
+                    </div>
+                    <div class="input-group">
+                        <label>Taille</label>
+                        <input type="number" id="create-taille">
+                    </div>
+                    <div class="input-group">
+                        <label>Adresse</label>
+                        <input type="text" id="create-address">
+                    </div>
                     <div class="input-group">
                         <label>Ethnie</label>
                         <select id="create-ethnie">
-                            <option>Caucasienne</option><option>Afro-Américaine</option><option>Hispanique</option><option>Asiatique</option><option>Amérindienne</option><option>Moyen-Orientale</option><option>Métis</option><option>Autre</option>
+                            <option>Caucasienne</option>
+                            <option>Afro-Américaine</option>
+                            <option>Hispanique</option>
+                            <option>Asiatique</option>
+                            <option>Amérindienne</option>
+                            <option>Autre</option>
                         </select>
                     </div>
-                    <div class="input-group"><label>Couleur de cheveux</label><input type="text" id="create-hair"></div>
-                    <div class="input-group"><label>Couleur des yeux</label><input type="text" id="create-eyes"></div>
-                    <div class="input-group"><label>Appartenance</label><input type="text" id="create-appartenance"></div>
-                    <div class="input-group"><label>Emploi</label><input type="text" id="create-job"></div>
+                    <div class="input-group">
+                        <label>Couleur de cheveux</label>
+                        <input type="text" id="create-hair">
+                    </div>
+                    <div class="input-group">
+                        <label>Couleur des yeux</label>
+                        <input type="text" id="create-eyes">
+                    </div>
+                    <div class="input-group">
+                        <label>Appartenance</label>
+                        <input type="text" id="create-appartenance">
+                    </div>
+                    <div class="input-group">
+                        <label>Emploi</label>
+                        <input type="text" id="create-job">
+                    </div>
                     <div class="input-group">
                         <label>Permis de conduire</label>
                         <select id="create-permis">
-                            <option value="Valide">Valide</option>
-                            <option value="Non valide">Non valide</option>
+                            <option>Valide</option>
+                            <option>Non valide</option>
                         </select>
                     </div>
                 </div>
@@ -426,51 +658,91 @@
                 <button class="btn-close" onclick="closeModals()"><i class="fa-solid fa-xmark"></i></button>
             </div>
             <div class="modal-body">
-                
                 <div class="photo-edit-area mb-3 hidden" id="edit-section-photo">
                     <p>Nouvelle photo du citoyen</p>
                     <div class="photo-edit-wrapper">
-                        <img src="" alt="Current Photo" id="edit-photo-preview" class="profile-avatar large">
+                        <img src="" id="edit-photo-preview" class="profile-avatar large">
                         <div class="upload-box flex-1">
                             <p>Coller une nouvelle image (CTRL + V)</p>
-                            <span class="text-muted">(Format sans lunettes exigé)</span>
                         </div>
                     </div>
                 </div>
-
                 <div class="form-grid-2 hidden" id="edit-section-info">
-                    <div class="input-group"><label>Prénom *</label><input type="text" id="edit-firstname" placeholder="Prénom"></div>
-                    <div class="input-group"><label>Nom *</label><input type="text" id="edit-lastname" placeholder="Nom"></div>
-                    <div class="input-group"><label>Téléphone *</label><input type="text" id="edit-phone" placeholder="555-XXXX"></div>
-                    <div class="input-group"><label>Date de naissance *</label><input type="date" id="edit-birthdate"></div>
-                    <div class="input-group"><label>Genre</label><select id="edit-gender"><option>Homme</option><option>Femme</option></select></div>
-                    <div class="input-group"><label>Email *</label><input type="email" id="edit-email" placeholder="mail@ls.com"></div>
-                    <div class="input-group"><label>Poids</label><input type="number" id="edit-poids" placeholder="kg"></div>
-                    <div class="input-group"><label>Taille</label><input type="number" id="edit-taille" placeholder="cm"></div>
-                    <div class="input-group"><label>Adresse</label><input type="text" id="edit-address" placeholder="Quartier/Rue"></div>
+                    <div class="input-group">
+                        <label>Prénom *</label>
+                        <input type="text" id="edit-firstname">
+                    </div>
+                    <div class="input-group">
+                        <label>Nom *</label>
+                        <input type="text" id="edit-lastname">
+                    </div>
+                    <div class="input-group">
+                        <label>Téléphone *</label>
+                        <input type="text" id="edit-phone">
+                    </div>
+                    <div class="input-group">
+                        <label>Date de naissance *</label>
+                        <input type="date" id="edit-birthdate">
+                    </div>
+                    <div class="input-group">
+                        <label>Genre</label>
+                        <select id="edit-gender">
+                            <option>Homme</option>
+                            <option>Femme</option>
+                        </select>
+                    </div>
+                    <div class="input-group">
+                        <label>Email *</label>
+                        <input type="email" id="edit-email">
+                    </div>
+                    <div class="input-group">
+                        <label>Poids</label>
+                        <input type="number" id="edit-poids">
+                    </div>
+                    <div class="input-group">
+                        <label>Taille</label>
+                        <input type="number" id="edit-taille">
+                    </div>
+                    <div class="input-group">
+                        <label>Adresse</label>
+                        <input type="text" id="edit-address">
+                    </div>
                     <div class="input-group">
                         <label>Ethnie</label>
                         <select id="edit-ethnie">
-                            <option>Caucasienne</option><option>Afro-Américaine</option><option>Hispanique</option><option>Asiatique</option><option>Amérindienne</option><option>Moyen-Orientale</option><option>Métis</option><option>Autre</option>
+                            <option>Caucasienne</option>
+                            <option>Afro-Américaine</option>
+                            <option>Hispanique</option>
+                            <option>Autre</option>
                         </select>
                     </div>
-                    <div class="input-group"><label>Couleur de cheveux</label><input type="text" id="edit-hair"></div>
-                    <div class="input-group"><label>Couleur des yeux</label><input type="text" id="edit-eyes"></div>
-                    <div class="input-group"><label>Appartenance</label><input type="text" id="edit-appartenance"></div>
-                    <div class="input-group"><label>Emploi</label><input type="text" id="edit-job"></div>
                     <div class="input-group">
-                        <label>Permis de conduire</label>
+                        <label>Couleur de cheveux</label>
+                        <input type="text" id="edit-hair">
+                    </div>
+                    <div class="input-group">
+                        <label>Couleur des yeux</label>
+                        <input type="text" id="edit-eyes">
+                    </div>
+                    <div class="input-group">
+                        <label>Appartenance</label>
+                        <input type="text" id="edit-appartenance">
+                    </div>
+                    <div class="input-group">
+                        <label>Emploi</label>
+                        <input type="text" id="edit-job">
+                    </div>
+                    <div class="input-group">
+                        <label>Permis</label>
                         <select id="edit-permis-conduire">
-                            <option value="Valide">Valide</option>
-                            <option value="Non valide">Non valide</option>
+                            <option>Valide</option>
+                            <option>Non valide</option>
                         </select>
                     </div>
                 </div>
-
             </div>
             <div class="modal-footer">
-                <button class="btn-secondary" onclick="closeModals()">Annuler</button>
-                <button class="btn-primary" id="btn-save-edit">Sauvegarder les modifications</button>
+                <button class="btn-primary" id="btn-save-edit">Sauvegarder</button>
             </div>
         </div>
     </div>
@@ -478,47 +750,59 @@
     <div class="modal-overlay hidden" id="modal-arrest-report">
         <div class="modal-container large">
             <div class="modal-header">
-                <h3>Créer un rapport d'arrestation - <span id="arrest-modal-name"></span></h3>
+                <h3>Rapport d'arrestation</h3>
                 <button class="btn-close" onclick="closeModals()"><i class="fa-solid fa-xmark"></i></button>
             </div>
             <div class="modal-body">
                 <div class="form-grid-2 mb-3">
-                    <div class="input-group"><label>Date et heure *</label><input type="text" id="arrest-date" placeholder="JJ/MM/AAAA HH:MM"></div>
-                    <div class="input-group"><label>Poste de police</label><input type="text" id="arrest-station" placeholder="Ex: Mission Row, Vespucci..."></div>
+                    <div class="input-group">
+                        <label>Date et heure *</label>
+                        <input type="text" id="arrest-date">
+                    </div>
+                    <div class="input-group">
+                        <label>Poste de police</label>
+                        <input type="text" id="arrest-station">
+                    </div>
                 </div>
                 <div class="form-grid-2 mb-3">
-                    <div class="input-group"><label>Agents impliqués *</label><input type="text" id="arrest-officiers" placeholder="Noms / Matricules"></div>
-                    <div class="input-group"><label>Avocat présent</label><input type="text" id="arrest-avocat" placeholder="Nom de l'avocat (Laisser vide si aucun)"></div>
+                    <div class="input-group">
+                        <label>Agents impliqués *</label>
+                        <input type="text" id="arrest-officiers">
+                    </div>
+                    <div class="input-group">
+                        <label>Avocat présent</label>
+                        <input type="text" id="arrest-avocat">
+                    </div>
                 </div>
-                <div class="input-group mb-3"><label>Possessions retirées</label><input type="text" id="arrest-possessions" placeholder="Ex: Argent sale, téléphone, armes, stupéfiants..."></div>
-                
+                <div class="input-group mb-3">
+                    <label>Possessions retirées</label>
+                    <input type="text" id="arrest-possessions">
+                </div>
                 <div class="input-group mb-3">
                     <label>Rapport complet *</label>
-                    <div class="wysiwyg-box">
-                        <div class="wysiwyg-toolbar" style="margin-bottom: -1px; border-radius: 4px 4px 0 0; border: 1px solid var(--border-color); border-bottom: none;">
-                            <i class="fa-solid fa-bold"></i> <i class="fa-solid fa-italic"></i> <i class="fa-solid fa-underline"></i> <i class="fa-solid fa-list"></i>
-                        </div>
-                        <textarea id="arrest-text" style="height: 120px; width: 100%; background: var(--bg-input); border: 1px solid var(--border-color); color: white; padding: 10px; border-radius: 0 0 4px 4px;" placeholder="Détaillez le déroulement de l'intervention..."></textarea>
-                    </div>
+                    <textarea id="arrest-text" style="height: 120px; width: 100%; background: var(--bg-input); border: 1px solid var(--border-color); color: white; padding: 10px;"></textarea>
                 </div>
-                <hr class="separator">
-                <h4>Bilan de l'arrestation</h4>
-                <div class="input-group mb-3 mt-3"><label>Charges appliquées *</label><input type="text" id="arrest-charges" placeholder="Ex: Possession d'arme illégale, Délit de fuite..."></div>
+                <div class="input-group mb-3 mt-3">
+                    <label>Charges appliquées *</label>
+                    <input type="text" id="arrest-charges">
+                </div>
                 <div class="form-grid-2 mb-3">
-                    <div class="input-group"><label>Amende totale ($)</label><input type="number" id="arrest-fine" placeholder="Ex: 7000"></div>
-                    <div class="input-group"><label>Peine totale (mois)</label><input type="number" id="arrest-time" placeholder="Ex: 30"></div>
-                </div>
-                <div class="input-group mb-3 mt-4">
-                    <label>Photos / Preuves</label>
-                    <div class="upload-box small" id="arrest-upload-box">
-                        <p>Cliquez ici puis faites (CTRL + V) pour coller une ou plusieurs images</p>
-                        <div id="arrest-photos-container" style="display: flex; gap: 10px; margin-top: 15px; flex-wrap: wrap;"></div>
+                    <div class="input-group">
+                        <label>Amende totale ($)</label>
+                        <input type="number" id="arrest-fine">
                     </div>
+                    <div class="input-group">
+                        <label>Peine totale (mois)</label>
+                        <input type="number" id="arrest-time">
+                    </div>
+                </div>
+                <div class="upload-box small mt-4" id="arrest-upload-box">
+                    <p>Coller image (CTRL+V)</p>
+                    <div id="arrest-photos-container" style="display: flex; gap: 10px; margin-top: 15px;"></div>
                 </div>
             </div>
             <div class="modal-footer">
-                <button class="btn-secondary" onclick="closeModals()">Annuler</button>
-                <button class="btn-primary" id="btn-submit-arrest">Sauvegarder le rapport</button>
+                <button class="btn-primary" id="btn-submit-arrest">Sauvegarder</button>
             </div>
         </div>
     </div>
@@ -526,60 +810,87 @@
     <div class="modal-overlay hidden" id="modal-ticket">
         <div class="modal-container">
             <div class="modal-header">
-                <h3>Ticket routier - <span id="ticket-modal-name"></span></h3>
+                <h3>Ticket routier</h3>
                 <button class="btn-close" onclick="closeModals()"><i class="fa-solid fa-xmark"></i></button>
             </div>
             <div class="modal-body">
                 <div class="form-grid-2 mb-3">
-                    <div class="input-group"><label>Date et heure *</label><input type="text" id="ticket-date" placeholder="JJ/MM/AAAA HH:MM"></div>
-                    <div class="input-group"><label>Lieu de l'infraction</label><input type="text" id="ticket-lieu" placeholder="Ex: Autoroute Sud"></div>
+                    <div class="input-group">
+                        <label>Date/Heure *</label>
+                        <input type="text" id="ticket-date">
+                    </div>
+                    <div class="input-group">
+                        <label>Lieu</label>
+                        <input type="text" id="ticket-lieu">
+                    </div>
                 </div>
-                <div class="input-group mb-3"><label>Infraction constatée *</label><input type="text" id="ticket-infraction" placeholder="Ex: Excès de vitesse, Feu rouge..."></div>
+                <div class="input-group mb-3">
+                    <label>Infraction *</label>
+                    <input type="text" id="ticket-infraction">
+                </div>
                 <div class="form-grid-2 mb-3">
-                    <div class="input-group"><label>Amende ($)</label><input type="number" id="ticket-amende" placeholder="Montant"></div>
-                    <div class="input-group"><label>Points retirés</label><input type="number" id="ticket-points" placeholder="Nombre de points"></div>
+                    <div class="input-group">
+                        <label>Amende ($)</label>
+                        <input type="number" id="ticket-amende">
+                    </div>
+                    <div class="input-group">
+                        <label>Points retirés</label>
+                        <input type="number" id="ticket-points">
+                    </div>
                 </div>
-                <div class="input-group mb-3"><label>Officiers en charge</label><input type="text" id="ticket-officiers" placeholder="Nom des agents"></div>
+                <div class="input-group mb-3">
+                    <label>Officiers</label>
+                    <input type="text" id="ticket-officiers">
+                </div>
             </div>
             <div class="modal-footer">
-                <button class="btn-primary w-full" id="btn-submit-ticket">Émettre le ticket</button>
+                <button class="btn-primary w-full" id="btn-submit-ticket">Émettre</button>
             </div>
         </div>
     </div>
 
-    <div class="modal-overlay hidden" id="modal-plainte">
+    <div class="modal-overlay hidden" id="modal-plainte-create">
         <div class="modal-container large">
             <div class="modal-header">
-                <h3>Encoder une plainte - <span id="plainte-modal-name"></span></h3>
+                <h3>Encoder une plainte</h3>
                 <button class="btn-close" onclick="closeModals()"><i class="fa-solid fa-xmark"></i></button>
             </div>
             <div class="modal-body">
                 <div class="form-grid-2 mb-3">
-                    <div class="input-group"><label>Date et heure *</label><input type="text" id="plainte-date" placeholder="JJ/MM/AAAA HH:MM"></div>
-                    <div class="input-group"><label>Officiers en charge</label><input type="text" id="plainte-officiers" placeholder="Agents prenant la plainte"></div>
+                    <div class="input-group">
+                        <label>Date/Heure *</label>
+                        <input type="text" id="plainte-date">
+                    </div>
+                    <div class="input-group">
+                        <label>Officiers</label>
+                        <input type="text" id="plainte-officiers">
+                    </div>
                 </div>
-                <div class="input-group mb-3"><label>Avocat(s) présent(s)</label><input type="text" id="plainte-avocat" placeholder="Nom de l'avocat"></div>
+                <div class="input-group mb-3">
+                    <label>Avocat(s)</label>
+                    <input type="text" id="plainte-avocat">
+                </div>
                 <div class="form-grid-2 mb-3">
-                    <div class="input-group"><label>Raison *</label><input type="text" id="plainte-raison" placeholder="Ex: Vol avec violence"></div>
-                    <div class="input-group"><label>Contre *</label><input type="text" id="plainte-contre" placeholder="Ex: X ou Nom du suspect"></div>
+                    <div class="input-group">
+                        <label>Raison *</label>
+                        <input type="text" id="plainte-raison">
+                    </div>
+                    <div class="input-group">
+                        <label>Contre *</label>
+                        <input type="text" id="plainte-contre">
+                    </div>
                 </div>
                 <div class="input-group mb-3">
                     <label>Corps de la plainte *</label>
-                    <div class="wysiwyg-box">
-                        <textarea id="plainte-text" placeholder="Récit de la victime..." style="height: 150px; width: 100%; background: var(--bg-input); border: 1px solid var(--border-color); color: white; padding: 15px;"></textarea>
-                    </div>
+                    <textarea id="plainte-text" style="height: 150px; width: 100%; background: var(--bg-input); border: 1px solid var(--border-color); color: white; padding: 15px;"></textarea>
                 </div>
-                <div class="input-group mb-3 mt-4">
-                    <label>Photos / Preuves</label>
-                    <div class="upload-box small" id="plainte-upload-box">
-                        <p>Cliquez ici puis faites (CTRL + V) pour coller une ou plusieurs images</p>
-                        <div id="plainte-photos-container" style="display: flex; gap: 10px; margin-top: 15px; flex-wrap: wrap;"></div>
-                    </div>
+                <div class="upload-box small" id="plainte-upload-box">
+                    <p>Coller image (CTRL+V)</p>
+                    <div id="plainte-photos-container" style="display:flex; gap:10px; margin-top:15px;"></div>
                 </div>
             </div>
             <div class="modal-footer">
-                <button class="btn-secondary" onclick="closeModals()">Annuler</button>
-                <button class="btn-primary" id="btn-submit-plainte">Ajouter la plainte</button>
+                <button class="btn-primary" id="btn-submit-plainte">Ajouter</button>
             </div>
         </div>
     </div>
@@ -587,49 +898,31 @@
     <div class="modal-overlay hidden" id="modal-mandat">
         <div class="modal-container">
             <div class="modal-header">
-                <h3>Demande de mandat d'arrêt - <span id="mandat-modal-name"></span></h3>
+                <h3>Demande de mandat</h3>
                 <button class="btn-close" onclick="closeModals()"><i class="fa-solid fa-xmark"></i></button>
             </div>
             <div class="modal-body">
                 <div class="form-grid-2 mb-3">
-                    <div class="input-group"><label>Date et heure *</label><input type="text" id="mandat-date" placeholder="JJ/MM/AAAA HH:MM"></div>
-                    <div class="input-group"><label>Officiers en charge</label><input type="text" id="mandat-officiers" placeholder="Ajoutez des officiers..."></div>
-                </div>
-                <div class="input-group mb-3"><label>Motif du mandat *</label><input type="text" id="mandat-motif" placeholder="Rechercher ou écrire une infraction..."></div>
-                <div class="input-group mb-3">
-                    <label>Description / éléments à charge *</label>
-                    <div class="wysiwyg-toolbar" style="margin-bottom: -1px; border-radius: 4px 4px 0 0; border: 1px solid var(--border-color); border-bottom: none;">
-                        <i class="fa-solid fa-bold"></i> <i class="fa-solid fa-italic"></i> <i class="fa-solid fa-underline"></i> <i class="fa-solid fa-list"></i>
+                    <div class="input-group">
+                        <label>Date/Heure *</label>
+                        <input type="text" id="mandat-date">
                     </div>
-                    <textarea id="mandat-desc" style="height: 120px; width: 100%; background: var(--bg-input); border: 1px solid var(--border-color); color: white; padding: 10px; border-radius: 0 0 4px 4px;" placeholder="Détaillez les éléments justifiant la demande de mandat..."></textarea>
+                    <div class="input-group">
+                        <label>Officiers</label>
+                        <input type="text" id="mandat-officiers">
+                    </div>
+                </div>
+                <div class="input-group mb-3">
+                    <label>Motif *</label>
+                    <input type="text" id="mandat-motif">
+                </div>
+                <div class="input-group mb-3">
+                    <label>Description *</label>
+                    <textarea id="mandat-desc" style="height:120px; width:100%; background:var(--bg-input); border:1px solid var(--border-color); color:white; padding:10px;"></textarea>
                 </div>
             </div>
             <div class="modal-footer">
-                <button class="btn-primary w-full" id="btn-submit-mandat">Soumettre la demande</button>
-            </div>
-        </div>
-    </div>
-
-    <div class="modal-overlay hidden" id="modal-arme-create">
-        <div class="modal-container">
-            <div class="modal-header">
-                <h3>Encodage d'une arme</h3>
-                <button class="btn-close" onclick="closeModals()"><i class="fa-solid fa-xmark"></i></button>
-            </div>
-            <div class="modal-body">
-                <div class="form-grid-2 mb-3">
-                    <div class="input-group"><label>Date et heure</label><input type="text" value="29/03/2026 20:50" disabled></div>
-                    <div class="input-group"><label>Modèle de l'arme *</label><select><option>Pistolet de combat</option><option>Glock 17</option><option>AP Pistol</option></select></div>
-                </div>
-                <div class="form-grid-2 mb-3">
-                    <div class="input-group"><label>Origine *</label><select><option>Craft</option><option>Ammu-Nation</option><option>Saisie</option></select></div>
-                    <div class="input-group"><label>Motif(s)</label><input type="text" placeholder="Optionnel"></div>
-                </div>
-                <div class="input-group mb-3"><label>Numéro de série *</label><input type="text" placeholder="Ex: 846G7H92"></div>
-                <div class="input-group mb-3"><label>Citoyen lié (Propriétaire)</label><input type="text" placeholder="Rechercher un citoyen..."></div>
-            </div>
-            <div class="modal-footer">
-                <button class="btn-primary w-full">Enregistrer l'arme</button>
+                <button class="btn-primary w-full" id="btn-submit-mandat">Soumettre</button>
             </div>
         </div>
     </div>
@@ -642,22 +935,30 @@
             </div>
             <div class="modal-body">
                 <div class="input-group mb-3">
-                    <label>Titre du pôle *</label>
-                    <input type="text" id="pole-title" placeholder="Ex: CRIME, HP...">
+                    <label>Titre *</label>
+                    <input type="text" id="pole-title">
                 </div>
                 <div class="form-grid-2 mb-3">
-                    <div class="input-group"><label>Lead</label><input type="text" id="pole-lead" placeholder="Ex: 21"></div>
-                    <div class="input-group"><label>Co-Lead</label><input type="text" id="pole-colead" placeholder="Ex: 50"></div>
+                    <div class="input-group">
+                        <label>Lead</label>
+                        <input type="text" id="pole-lead">
+                    </div>
+                    <div class="input-group">
+                        <label>Co-Lead</label>
+                        <input type="text" id="pole-colead">
+                    </div>
                 </div>
-                <div class="input-group mb-3"><label>Superviseur</label><input type="text" id="pole-superviseur" placeholder="Ex: 21"></div>
                 <div class="input-group mb-3">
-                    <label>Membres (Un par ligne)</label>
-                    <textarea id="pole-membres" style="height: 100px; width: 100%; background: var(--bg-input); border: 1px solid var(--border-color); color: white; padding: 10px; border-radius: 4px;" placeholder="Ex:&#10;21 | DEV LOOP&#10;11 | Bryan Hardes"></textarea>
+                    <label>Superviseur</label>
+                    <input type="text" id="pole-superviseur">
+                </div>
+                <div class="input-group mb-3">
+                    <label>Membres</label>
+                    <textarea id="pole-membres" style="height:100px; width:100%; background:var(--bg-input); border:1px solid var(--border-color); color:white; padding:10px;"></textarea>
                 </div>
             </div>
             <div class="modal-footer">
-                <button class="btn-secondary" onclick="closeModals()">Annuler</button>
-                <button class="btn-primary" id="btn-save-pole">Enregistrer le pôle</button>
+                <button class="btn-primary" id="btn-save-pole">Enregistrer</button>
             </div>
         </div>
     </div>
@@ -665,43 +966,61 @@
     <div class="modal-overlay hidden" id="modal-op-report">
         <div class="modal-container large">
             <div class="modal-header">
-                <h3>Créer un rapport d'opération</h3>
+                <h3>Rapport d'opération</h3>
                 <button class="btn-close" onclick="closeModals()"><i class="fa-solid fa-xmark"></i></button>
             </div>
             <div class="modal-body">
                 <div class="form-grid-2 mb-3">
-                    <div class="input-group"><label>Date et heure *</label><input type="text" id="op-date" placeholder="JJ/MM/AAAA HH:MM"></div>
-                    <div class="input-group"><label>Type d'incident *</label><input type="text" id="op-type" placeholder="Ex: Accident, Braquage..."></div>
+                    <div class="input-group">
+                        <label>Date/Heure *</label>
+                        <input type="text" id="op-date">
+                    </div>
+                    <div class="input-group">
+                        <label>Type *</label>
+                        <input type="text" id="op-type">
+                    </div>
                 </div>
-                <div class="input-group mb-3"><label>Officiers impliqués *</label><input type="text" id="op-officiers" placeholder="Rechercher un officier..."></div>
-                <div class="input-group mb-3"><label>Otages</label><input type="text" id="op-otages" placeholder="Rechercher un otage..."></div>
-                <div class="input-group mb-3"><label>Lieu *</label><input type="text" id="op-lieu" placeholder="Ex: Mirror park"></div>
-                <div class="input-group mb-3"><label>Revendications</label><input type="text" id="op-revendications" placeholder="Ex: Vagos"></div>
+                <div class="input-group mb-3">
+                    <label>Officiers impliqués *</label>
+                    <input type="text" id="op-officiers">
+                </div>
+                <div class="input-group mb-3">
+                    <label>Otages</label>
+                    <input type="text" id="op-otages">
+                </div>
+                <div class="input-group mb-3">
+                    <label>Lieu *</label>
+                    <input type="text" id="op-lieu">
+                </div>
+                <div class="input-group mb-3">
+                    <label>Revendications</label>
+                    <input type="text" id="op-revendications">
+                </div>
                 <div class="form-grid-2 mb-3">
-                    <div class="input-group"><label>Lead négociateur</label><input type="text" id="op-lead-nego" placeholder="Sélectionner un officier"></div>
-                    <div class="input-group"><label>Lead terrain</label><input type="text" id="op-lead-terrain" placeholder="Sélectionner un officier"></div>
+                    <div class="input-group">
+                        <label>Lead négo</label>
+                        <input type="text" id="op-lead-nego">
+                    </div>
+                    <div class="input-group">
+                        <label>Lead terrain</label>
+                        <input type="text" id="op-lead-terrain">
+                    </div>
                 </div>
                 <div class="input-group mb-3">
                     <label>Rapport complet *</label>
-                    <div class="wysiwyg-box">
-                        <div class="wysiwyg-toolbar" style="margin-bottom: -1px; border-radius: 4px 4px 0 0; border: 1px solid var(--border-color); border-bottom: none;">
-                            <i class="fa-solid fa-bold"></i> <i class="fa-solid fa-italic"></i> <i class="fa-solid fa-underline"></i> <i class="fa-solid fa-list"></i>
-                        </div>
-                        <textarea id="op-text" style="height: 120px; width: 100%; background: var(--bg-input); border: 1px solid var(--border-color); color: white; padding: 10px; border-radius: 0 0 4px 4px;" placeholder="Détaillez le déroulement..."></textarea>
-                    </div>
+                    <textarea id="op-text" style="height:120px; width:100%; background:var(--bg-input); border:1px solid var(--border-color); color:white; padding:10px;"></textarea>
                 </div>
-                <div class="input-group mb-3"><label>Dossiers photos (preuves)</label><input type="text" id="op-dossier" placeholder="Aucun dossier lié"></div>
-                
-                <div class="input-group mb-3 mt-4">
-                    <label>Photos preuves</label>
-                    <div class="upload-box small" id="op-upload-box">
-                        <p>Coller une ou plusieurs images (CTRL + V)</p>
-                        <div id="op-photos-container" style="display: flex; gap: 10px; margin-top: 15px; flex-wrap: wrap;"></div>
-                    </div>
+                <div class="input-group mb-3">
+                    <label>Dossiers liés</label>
+                    <input type="text" id="op-dossier">
+                </div>
+                <div class="upload-box small" id="op-upload-box">
+                    <p>Coller image (CTRL+V)</p>
+                    <div id="op-photos-container" style="display:flex; gap:10px; margin-top:15px;"></div>
                 </div>
             </div>
             <div class="modal-footer">
-                <button class="btn-primary w-full" id="btn-save-op-report">Sauvegarder le rapport</button>
+                <button class="btn-primary w-full" id="btn-save-op-report">Sauvegarder</button>
             </div>
         </div>
     </div>
@@ -714,23 +1033,263 @@
             </div>
             <div class="modal-body">
                 <div class="input-group mb-3">
-                    <label>Nom affiché (Identité) *</label>
-                    <input type="text" id="profile-setting-name" placeholder="Ex: DEV PHOTON">
+                    <label>Nom affiché *</label>
+                    <input type="text" id="profile-setting-name">
                 </div>
                 <div class="form-grid-2 mb-3">
-                    <div class="input-group"><label>Matricule *</label><input type="text" id="profile-setting-matricule" placeholder="Ex: 21"></div>
-                    <div class="input-group"><label>Numéro de téléphone</label><input type="text" id="profile-setting-phone" placeholder="Ex: 555-XXXX"></div>
+                    <div class="input-group">
+                        <label>Matricule *</label>
+                        <input type="text" id="profile-setting-matricule">
+                    </div>
+                    <div class="input-group">
+                        <label>Téléphone</label>
+                        <input type="text" id="profile-setting-phone">
+                    </div>
                 </div>
-                <div class="input-group mb-3"><label>IBAN (Compte bancaire)</label><input type="text" id="profile-setting-iban" placeholder="Ex: LS-123456789"></div>
-                <div class="input-group mb-3"><label>Adresse E-mail</label><input type="email" id="profile-setting-email" placeholder="mail@ls.com"></div>
+                <div class="input-group mb-3">
+                    <label>IBAN</label>
+                    <input type="text" id="profile-setting-iban">
+                </div>
+                <div class="input-group mb-3">
+                    <label>E-mail</label>
+                    <input type="email" id="profile-setting-email">
+                </div>
             </div>
             <div class="modal-footer">
-                <button class="btn-secondary" onclick="closeModals()">Annuler</button>
-                <button class="btn-primary" id="btn-save-profile">Enregistrer les modifications</button>
+                <button class="btn-primary" id="btn-save-profile">Enregistrer</button>
             </div>
         </div>
     </div>
 
+    <div class="modal-overlay hidden" id="modal-arme-create">
+        <div class="modal-container">
+            <div class="modal-header">
+                <h3>Encodage arme</h3>
+                <button class="btn-close" onclick="closeModals()"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div class="modal-body">
+                <div class="form-grid-2 mb-3">
+                    <div class="input-group">
+                        <label>Date/Heure *</label>
+                        <input type="text" id="arme-date">
+                    </div>
+                    <div class="input-group">
+                        <label>Origine *</label>
+                        <input type="text" id="arme-origine">
+                    </div>
+                </div>
+                <div class="form-grid-2 mb-3">
+                    <div class="input-group">
+                        <label>Modèle *</label>
+                        <input type="text" id="arme-modele">
+                    </div>
+                    <div class="input-group">
+                        <label>Série *</label>
+                        <input type="text" id="arme-serie">
+                    </div>
+                </div>
+                <div class="input-group mb-3">
+                    <label>Motif(s)</label>
+                    <input type="text" id="arme-motifs">
+                </div>
+                <div class="input-group mb-3">
+                    <label>Citoyen lié</label>
+                    <input type="text" id="arme-citoyen">
+                </div>
+                <div class="input-group mb-3">
+                    <input type="checkbox" id="arme-delit">
+                    <label for="arme-delit" style="display:inline; margin-left:8px;">Utilisé pour délit</label>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-primary w-full" id="btn-submit-arme">Enregistrer</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay hidden" id="modal-bracelet-create">
+        <div class="modal-container">
+            <div class="modal-header">
+                <h3>Encoder bracelet</h3>
+                <button class="btn-close" onclick="closeModals()"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div class="modal-body">
+                <div class="input-group mb-3">
+                    <label>Citoyen *</label>
+                    <input type="text" id="bracelet-citoyen">
+                </div>
+                <div class="form-grid-2 mb-3">
+                    <div class="input-group">
+                        <label>Officier *</label>
+                        <input type="text" id="bracelet-officier">
+                    </div>
+                    <div class="input-group">
+                        <label>NPRE *</label>
+                        <input type="text" id="bracelet-npre">
+                    </div>
+                </div>
+                <div class="form-grid-2 mb-3">
+                    <div class="input-group">
+                        <label>Posé le *</label>
+                        <input type="text" id="bracelet-date-pose">
+                    </div>
+                    <div class="input-group">
+                        <label>Expire le *</label>
+                        <input type="text" id="bracelet-date-expire">
+                    </div>
+                </div>
+                <div class="input-group mb-3">
+                    <label>Motif(s) *</label>
+                    <input type="text" id="bracelet-motifs">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-primary w-full" id="btn-submit-bracelet">Encoder</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay hidden" id="modal-vehicule-create">
+        <div class="modal-container large">
+            <div class="modal-header">
+                <h3>Ajouter un véhicule en infraction</h3>
+                <button class="btn-close" onclick="closeModals()"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div class="modal-body">
+                <div class="form-grid-2 mb-3">
+                    <div class="input-group">
+                        <label>Type *</label>
+                        <input type="text" id="vehicule-type">
+                    </div>
+                    <div class="input-group">
+                        <label>Plaque *</label>
+                        <input type="text" id="vehicule-plaque">
+                    </div>
+                </div>
+                <div class="form-grid-2 mb-3">
+                    <div class="input-group">
+                        <label>Titre infraction *</label>
+                        <input type="text" id="vehicule-infraction">
+                    </div>
+                    <div class="input-group">
+                        <label>Propriétaire</label>
+                        <input type="text" id="vehicule-proprio">
+                    </div>
+                </div>
+                <div class="form-grid-2 mb-3">
+                    <div class="input-group">
+                        <label>Dossier de preuves lié</label>
+                        <input type="text" id="vehicule-dossier">
+                    </div>
+                    <div class="input-group">
+                        <label>Rapport d'opération lié</label>
+                        <input type="text" id="vehicule-rapport">
+                    </div>
+                </div>
+                <div class="upload-box small mt-4" id="vehicule-upload-box">
+                    <p>Coller photo preuve (CTRL+V)</p>
+                    <div id="vehicule-photos-container" style="display:flex; gap:10px; margin-top:15px;"></div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-primary w-full" id="btn-submit-vehicule">Créer</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay hidden" id="modal-dossier-create">
+        <div class="modal-container">
+            <div class="modal-header">
+                <h3>Créer un dossier de preuves</h3>
+                <button class="btn-close" onclick="closeModals()"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div class="modal-body">
+                <div class="input-group mb-3">
+                    <label>Nom du dossier *</label>
+                    <input type="text" id="dossier-name" placeholder="Ex: Braquage Bijouterie Sud">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-primary w-full" id="btn-submit-dossier">Créer le dossier</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay hidden" id="modal-interrogatoire-create">
+        <div class="modal-container large">
+            <div class="modal-header">
+                <h3>Interrogatoire</h3>
+                <button class="btn-close" onclick="closeModals()"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div class="modal-body">
+                <div class="input-group mb-3">
+                    <label>Citoyen interrogé *</label>
+                    <input type="text" id="inter-citoyen">
+                </div>
+                <div class="form-grid-2 mb-3">
+                    <div class="input-group">
+                        <label>Début (Date/Heure) *</label>
+                        <input type="text" id="inter-debut">
+                    </div>
+                    <div class="input-group">
+                        <label>Fin (Date/Heure) *</label>
+                        <input type="text" id="inter-fin">
+                    </div>
+                </div>
+                <div class="form-grid-2 mb-3">
+                    <div class="input-group">
+                        <label>Personnes présentes</label>
+                        <input type="text" id="inter-presents">
+                    </div>
+                    <div class="input-group">
+                        <label>Poste de police</label>
+                        <input type="text" id="inter-poste">
+                    </div>
+                </div>
+                <div class="input-group mb-3">
+                    <label>Déroulé de l'interrogatoire *</label>
+                    <textarea id="inter-text" style="height:150px; width:100%; background:var(--bg-input); border:1px solid var(--border-color); color:white; padding:10px;"></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-primary w-full" id="btn-submit-interrogatoire">Enregistrer l'interrogatoire</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay hidden" id="modal-incident-create">
+        <div class="modal-container large">
+            <div class="modal-header">
+                <h3>Rapport d'incident</h3>
+                <button class="btn-close" onclick="closeModals()"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div class="modal-body">
+                <div class="form-grid-2 mb-3">
+                    <div class="input-group">
+                        <label>Titre de l'incident *</label>
+                        <input type="text" id="incident-titre">
+                    </div>
+                    <div class="input-group">
+                        <label>Date et heure *</label>
+                        <input type="text" id="incident-date">
+                    </div>
+                </div>
+                <div class="input-group mb-3">
+                    <label>Officiers impliqués</label>
+                    <input type="text" id="incident-officiers">
+                </div>
+                <div class="input-group mb-3">
+                    <label>Description complète *</label>
+                    <textarea id="incident-text" style="height:150px; width:100%; background:var(--bg-input); border:1px solid var(--border-color); color:white; padding:10px;"></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-primary w-full" id="btn-submit-incident">Sauvegarder</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="app.js"></script>
 </body>
 </html>
