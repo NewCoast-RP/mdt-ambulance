@@ -9,221 +9,218 @@
 </head>
 <body>
 
-    <div class="tablet-frame">
-        
-        <div id="login-screen" class="login-overlay">
-            <div class="login-box">
-                <div class="login-header">
-                    <img src="https://static.wikia.nocookie.net/vibe/images/7/7b/LS.webp/revision/latest?cb=20250926200025&path-prefix=fr" alt="Logo" class="login-logo">
-                    <h2>Accès Système</h2>
-                    <p class="text-muted">Veuillez vous identifier</p>
+    <div id="login-screen" class="login-overlay">
+        <div class="login-box">
+            <div class="login-header">
+                <img src="https://static.wikia.nocookie.net/vibe/images/7/7b/LS.webp/revision/latest?cb=20250926200025&path-prefix=fr" alt="Logo" class="login-logo">
+                <h2>Accès Système</h2>
+                <p class="text-muted">Veuillez vous identifier</p>
+            </div>
+            
+            <div class="login-body">
+                <div class="input-group mb-3">
+                    <label>Identifiant de service</label>
+                    <input type="text" id="login-username" placeholder="Ex: officier">
+                </div>
+                <div class="input-group mb-3">
+                    <label>Mot de passe</label>
+                    <div class="password-wrapper">
+                        <input type="password" id="login-password" placeholder="***">
+                        <i class="fa-solid fa-eye" id="toggle-password"></i>
+                    </div>
                 </div>
                 
-                <div class="login-body">
-                    <div class="input-group mb-3">
-                        <label>Identifiant de service</label>
-                        <input type="text" id="login-username" placeholder="Ex: officier">
-                    </div>
-                    <div class="input-group mb-3">
-                        <label>Mot de passe</label>
-                        <div class="password-wrapper">
-                            <input type="password" id="login-password" placeholder="***">
-                            <i class="fa-solid fa-eye" id="toggle-password"></i>
-                        </div>
-                    </div>
-                    
-                    <button id="btn-login" class="btn-primary w-full mt-4">Connexion</button>
-                    <p id="login-error" class="text-danger hidden mt-4" style="text-align: center; font-size: 0.85rem;">Identifiant inconnu ou accès refusé.</p>
-                </div>
+                <button id="btn-login" class="btn-primary w-full mt-4">Connexion</button>
+                <p id="login-error" class="text-danger hidden mt-4" style="text-align: center; font-size: 0.85rem;">Identifiant inconnu ou accès refusé.</p>
             </div>
         </div>
+    </div>
 
-        <div class="mdt-wrapper hidden" id="mdt-app">
+    <div class="mdt-wrapper hidden" id="mdt-app">
+        
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <img src="https://static.wikia.nocookie.net/morelife/images/7/7f/LSPD-logo.png/revision/latest?cb=20240305013722&path-prefix=fr" alt="SASP Logo" class="dept-logo">
+                <div class="dept-info">
+                    <h2>SASP</h2>
+                    <span>San Andreas State Police</span>
+                </div>
+            </div>
             
-            <aside class="sidebar">
-                <div class="sidebar-header">
-                    <img src="https://static.wikia.nocookie.net/morelife/images/7/7f/LSPD-logo.png/revision/latest?cb=20240305013722&path-prefix=fr" alt="SASP Logo" class="dept-logo">
-                    <div class="dept-info">
-                        <h2>SASP</h2>
-                        <span>San Andreas State Police</span>
+            <div class="sidebar-scroll">
+                <nav class="sidebar-nav">
+                    
+                    <div class="nav-section" data-section="general">
+                        <div class="nav-section-title collapsible">
+                            Général <i class="fa-solid fa-chevron-up"></i>
+                        </div>
+                        <ul class="nav-list">
+                            <li class="nav-item active" data-target="accueil">Accueil</li>
+                            <li class="nav-item" data-target="citoyens">Citoyens</li>
+                            <li class="nav-item" data-target="effectifs">Effectifs</li>
+                            <li class="nav-item" data-target="poles">Pôles / spécialités</li>
+                        </ul>
+                    </div>
+
+                    <div class="nav-section" data-section="registres">
+                        <div class="nav-section-title collapsible">
+                            Registres <i class="fa-solid fa-chevron-down"></i>
+                        </div>
+                        <ul class="nav-list collapsed">
+                            <li class="nav-item" data-target="rapports">Rapports d'opération</li>
+                            <li class="nav-item" data-target="armes">Registre des armes</li>
+                            <li class="nav-item" data-target="bracelets">Registre des bracelets</li>
+                            <li class="nav-item" data-target="vehicules">Véhicules en infraction</li>
+                        </ul>
+                    </div>
+
+                    <div class="nav-section" data-section="preuves">
+                        <div class="nav-section-title collapsible">
+                            Preuves <i class="fa-solid fa-chevron-down"></i>
+                        </div>
+                        <ul class="nav-list collapsed">
+                            <li class="nav-item" data-target="preuves">Dossiers photos / preuves</li>
+                        </ul>
+                    </div>
+
+                    <div class="nav-section" data-section="mes_dossiers">
+                        <div class="nav-section-title collapsible">
+                            Mes dossiers <i class="fa-solid fa-chevron-down"></i>
+                        </div>
+                        <ul class="nav-list collapsed">
+                            <li class="nav-item" data-target="mes-plaintes">Mes plaintes</li>
+                            <li class="nav-item" data-target="mes-interrogatoires">Mes interrogatoires</li>
+                            <li class="nav-item" data-target="mes-incidents">Mes rapports d'incident</li>
+                        </ul>
+                    </div>
+
+                    <div class="nav-section" data-section="superviseur">
+                        <div class="nav-section-title collapsible">
+                            Superviseur <i class="fa-solid fa-chevron-down"></i>
+                        </div>
+                        <ul class="nav-list collapsed">
+                            <li class="nav-item" data-target="sup-plaintes">Liste globale des plaintes</li>
+                            <li class="nav-item" data-target="sup-interrogatoires">Liste des interrogatoires</li>
+                            <li class="nav-item" data-target="sup-incidents">Liste des rapports d'incident</li>
+                            <li class="nav-item" data-target="statistiques">Statistiques des agents</li>
+                        </ul>
+                    </div>
+
+                </nav>
+            </div>
+
+            <div class="sidebar-footer">
+                <div class="user-card">
+                    <div class="user-meta">
+                        <span class="user-name">
+                            Chargement... 
+                            <i class="fa-solid fa-gear" id="btn-settings" style="cursor: pointer; margin-left: 5px;" title="Mon Profil"></i> 
+                            <i class="fa-solid fa-power-off" id="btn-logout" style="cursor: pointer; margin-left: 5px;" title="Se déconnecter"></i>
+                        </span>
+                        <span class="user-rank">Grade - Matricule</span>
                     </div>
                 </div>
-                
-                <div class="sidebar-scroll">
-                    <nav class="sidebar-nav">
+            </div>
+        </aside>
+
+        <main class="main-content">
+            
+            <div class="view-page active" id="view-accueil">
+                <div class="grid-2-col h-full">
+                    <div class="panel">
+                        <div class="panel-header">
+                            <h3>Personnes most wanted</h3>
+                            <span class="badge" id="dashboard-wanted-count">0 personnes recherchées</span>
+                        </div>
+                        <div class="panel-body" id="dashboard-wanted-list">
+                            <p class="text-muted" style="padding: 15px;">Aucun individu recherché actuellement.</p>
+                        </div>
+                    </div>
+                    <div class="panel">
+                        <div class="panel-header">
+                            <h3>Bloc-note personnel</h3>
+                        </div>
+                        <div class="panel-body no-pad">
+                            <textarea class="note-area" placeholder="Écrivez vos notes personnelles ici..."></textarea>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="view-page" id="view-citoyens">
+                <div class="citoyen-layout h-full">
+                    
+                    <div class="citoyen-sidebar">
+                        <div class="search-container w-full mb-3">
+                            <i class="fa-solid fa-magnifying-glass"></i>
+                            <input type="text" id="search-citizen-input" placeholder="Rechercher un citoyen">
+                        </div>
+                        <button class="btn-primary w-full mb-4" onclick="openModal('modal-citizen-create')">Encoder un citoyen</button>
                         
-                        <div class="nav-section" data-section="general">
-                            <div class="nav-section-title collapsible">
-                                Général <i class="fa-solid fa-chevron-up"></i>
-                            </div>
-                            <ul class="nav-list">
-                                <li class="nav-item active" data-target="accueil">Accueil</li>
-                                <li class="nav-item" data-target="citoyens">Citoyens</li>
-                                <li class="nav-item" data-target="effectifs">Effectifs</li>
-                                <li class="nav-item" data-target="poles">Pôles / spécialités</li>
-                            </ul>
-                        </div>
-
-                        <div class="nav-section" data-section="registres">
-                            <div class="nav-section-title collapsible">
-                                Registres <i class="fa-solid fa-chevron-down"></i>
-                            </div>
-                            <ul class="nav-list collapsed">
-                                <li class="nav-item" data-target="rapports">Rapports d'opération</li>
-                                <li class="nav-item" data-target="armes">Registre des armes</li>
-                                <li class="nav-item" data-target="bracelets">Registre des bracelets</li>
-                                <li class="nav-item" data-target="vehicules">Véhicules en infraction</li>
-                            </ul>
-                        </div>
-
-                        <div class="nav-section" data-section="preuves">
-                            <div class="nav-section-title collapsible">
-                                Preuves <i class="fa-solid fa-chevron-down"></i>
-                            </div>
-                            <ul class="nav-list collapsed">
-                                <li class="nav-item" data-target="preuves">Dossiers photos / preuves</li>
-                            </ul>
-                        </div>
-
-                        <div class="nav-section" data-section="mes_dossiers">
-                            <div class="nav-section-title collapsible">
-                                Mes dossiers <i class="fa-solid fa-chevron-down"></i>
-                            </div>
-                            <ul class="nav-list collapsed">
-                                <li class="nav-item" data-target="mes-plaintes">Mes plaintes</li>
-                                <li class="nav-item" data-target="mes-interrogatoires">Mes interrogatoires</li>
-                                <li class="nav-item" data-target="mes-incidents">Mes rapports d'incident</li>
-                            </ul>
-                        </div>
-
-                        <div class="nav-section" data-section="superviseur">
-                            <div class="nav-section-title collapsible">
-                                Superviseur <i class="fa-solid fa-chevron-down"></i>
-                            </div>
-                            <ul class="nav-list collapsed">
-                                <li class="nav-item" data-target="sup-plaintes">Liste globale des plaintes</li>
-                                <li class="nav-item" data-target="sup-interrogatoires">Liste des interrogatoires</li>
-                                <li class="nav-item" data-target="sup-incidents">Liste des rapports d'incident</li>
-                                <li class="nav-item" data-target="statistiques">Statistiques des agents</li>
-                            </ul>
-                        </div>
-
-                    </nav>
-                </div>
-
-                <div class="sidebar-footer">
-                    <div class="user-card">
-                        <div class="user-meta">
-                            <span class="user-name">
-                                Chargement... 
-                                <i class="fa-solid fa-gear" id="btn-settings" style="cursor: pointer; margin-left: 5px;" title="Mon Profil"></i> 
-                                <i class="fa-solid fa-power-off" id="btn-logout" style="cursor: pointer; margin-left: 5px;" title="Se déconnecter"></i>
-                            </span>
-                            <span class="user-rank">Grade - Matricule</span>
-                        </div>
+                        <div class="citoyen-list" id="citoyen-list-container"></div>
                     </div>
-                </div>
-            </aside>
 
-            <main class="main-content">
-                
-                <div class="view-page active" id="view-accueil">
-                    <div class="grid-2-col h-full">
-                        <div class="panel">
-                            <div class="panel-header">
-                                <h3>Personnes most wanted</h3>
-                                <span class="badge" id="dashboard-wanted-count">0 personnes recherchées</span>
-                            </div>
-                            <div class="panel-body" id="dashboard-wanted-list">
-                                <p class="text-muted" style="padding: 15px;">Aucun individu recherché actuellement.</p>
-                            </div>
-                        </div>
-                        <div class="panel">
-                            <div class="panel-header">
-                                <h3>Bloc-note personnel</h3>
-                            </div>
-                            <div class="panel-body no-pad">
-                                <textarea class="note-area" placeholder="Écrivez vos notes personnelles ici..."></textarea>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="view-page" id="view-citoyens">
-                    <div class="citoyen-layout h-full">
-                        
-                        <div class="citoyen-sidebar">
-                            <div class="search-container w-full mb-3">
-                                <i class="fa-solid fa-magnifying-glass"></i>
-                                <input type="text" id="search-citizen-input" placeholder="Rechercher un citoyen">
-                            </div>
-                            <button class="btn-primary w-full mb-4" onclick="openModal('modal-citizen-create')">Encoder un citoyen</button>
-                            
-                            <div class="citoyen-list" id="citoyen-list-container"></div>
+                    <div class="citoyen-main">
+                        <div class="citoyen-empty" id="citoyen-empty-state">
+                            <p class="text-muted">Sélectionnez un citoyen pour afficher sa fiche.</p>
                         </div>
 
-                        <div class="citoyen-main">
-                            <div class="citoyen-empty" id="citoyen-empty-state">
-                                <p class="text-muted">Sélectionnez un citoyen pour afficher sa fiche.</p>
-                            </div>
-
-                            <div class="profile-panel h-full flex-col hidden" id="citoyen-profile-state" style="overflow-y: auto;">
-                                <div class="profile-top">
-                                    <img src="" alt="Avatar" class="profile-avatar" id="profile-main-avatar">
-                                    <div class="profile-titles">
-                                        <div style="display: flex; align-items: center; gap: 10px;">
-                                            <h2 id="profile-name">NOM PRENOM</h2>
-                                            <span id="profile-wanted-label" class="badge danger">WANTED</span>
-                                        </div>
-                                        <span class="profile-discord" id="profile-email">&lt;email&gt;</span>
-                                        <p class="profile-date" id="profile-phone-date">Date | Tel</p>
+                        <div class="profile-panel h-full flex-col hidden" id="citoyen-profile-state" style="overflow-y: auto;">
+                            <div class="profile-top">
+                                <img src="" alt="Avatar" class="profile-avatar" id="profile-main-avatar">
+                                <div class="profile-titles">
+                                    <div style="display: flex; align-items: center; gap: 10px;">
+                                        <h2 id="profile-name">NOM PRENOM</h2>
+                                        <span id="profile-wanted-label" class="badge danger">WANTED</span>
                                     </div>
-                                    
-                                    <div class="profile-edit-container ms-auto">
-                                        <button class="btn-icon" id="btn-edit-citizen-menu"><i class="fa-solid fa-pen"></i> Modifier</button>
-                                        <div class="context-menu hidden" id="edit-citizen-context-menu">
-                                            <button class="menu-item" id="menu-edit-info"><i class="fa-solid fa-file-signature"></i> Modifier les informations</button>
-                                            <button class="menu-item" id="menu-edit-photo"><i class="fa-solid fa-camera"></i> Modifier la photo</button>
-                                            <button class="menu-item danger" id="menu-revoke-ppa-civil"><i class="fa-solid fa-gun"></i> Retirer PPA civil</button>
-                                            <button class="menu-item danger" id="menu-revoke-ppa-chasse"><i class="fa-solid fa-paw"></i> Retirer PPA de chasse</button>
-                                            <button class="menu-item success" id="menu-remove-wanted"><i class="fa-solid fa-handcuffs"></i> Retirer du wanted</button>
-                                        </div>
+                                    <span class="profile-discord" id="profile-email">&lt;email&gt;</span>
+                                    <p class="profile-date" id="profile-phone-date">Date | Tel</p>
+                                </div>
+                                
+                                <div class="profile-edit-container ms-auto">
+                                    <button class="btn-icon" id="btn-edit-citizen-menu"><i class="fa-solid fa-pen"></i> Modifier</button>
+                                    <div class="context-menu hidden" id="edit-citizen-context-menu">
+                                        <button class="menu-item" id="menu-edit-info"><i class="fa-solid fa-file-signature"></i> Modifier les informations</button>
+                                        <button class="menu-item" id="menu-edit-photo"><i class="fa-solid fa-camera"></i> Modifier la photo</button>
+                                        <button class="menu-item danger" id="menu-revoke-ppa-civil"><i class="fa-solid fa-gun"></i> Retirer PPA civil</button>
+                                        <button class="menu-item danger" id="menu-revoke-ppa-chasse"><i class="fa-solid fa-paw"></i> Retirer PPA de chasse</button>
+                                        <button class="menu-item success" id="menu-remove-wanted"><i class="fa-solid fa-handcuffs"></i> Retirer du wanted</button>
                                     </div>
                                 </div>
-
-                                <div class="profile-stats-grid">
-                                    <div class="stat-item"><label>Poids</label><span id="profile-poids">-</span></div>
-                                    <div class="stat-item"><label>Taille</label><span id="profile-taille">-</span></div>
-                                    <div class="stat-item"><label>Sexe</label><span id="profile-gender">-</span></div>
-                                    <div class="stat-item"><label>Adresse</label><span id="profile-address">-</span></div>
-                                    <div class="stat-item"><label>Ethnie</label><span id="profile-ethnie">-</span></div>
-                                    <div class="stat-item"><label>Cheveux</label><span id="profile-hair">-</span></div>
-                                    <div class="stat-item"><label>Yeux</label><span id="profile-eyes">-</span></div>
-                                    <div class="stat-item"><label>Appartenance</label><span id="profile-appartenance">-</span></div>
-                                    <div class="stat-item"><label>Emploi</label><span id="profile-job">-</span></div>
-                                    <div class="stat-item"><label>Permis de conduire</label><span id="stat-permis">-</span></div>
-                                    <div class="stat-item"><label>PPA Civil</label><span id="stat-ppa-civil">-</span></div>
-                                    <div class="stat-item"><label>PPA Chasse</label><span id="stat-ppa-chasse">-</span></div>
-                                    <div class="stat-item"><label>Décédé</label><span id="stat-decede">-</span></div>
-                                    <div class="stat-item"><label>Wanted</label><span id="stat-wanted">-</span></div>
-                                </div>
-
-                                <div class="profile-actions-row mb-4">
-                                    <button class="btn-action-small" onclick="openModal('modal-mandat')">Mandat</button>
-                                    <button class="btn-action-small" onclick="openModal('modal-ticket')">Ticket routier</button>
-                                    <button class="btn-action-small" id="btn-open-arrest-citizen">Rapport arrestation</button>
-                                    <button class="btn-action-small" id="btn-open-plainte-citizen">Plainte</button>
-                                </div>
-
-                                <div class="profile-nav">
-                                    <button class="tab-link active" data-tab="rapports">Rapports d'arrestation</button>
-                                    <button class="tab-link" data-tab="tickets">Tickets routiers</button>
-                                    <button class="tab-link" data-tab="mandats">Mandats d'arrêt</button>
-                                    <button class="tab-link" data-tab="plaintes">Plaintes</button>
-                                </div>
-
-                                <div class="profile-content" id="profile-content-area"></div>
                             </div>
+
+                            <div class="profile-stats-grid">
+                                <div class="stat-item"><label>Poids</label><span id="profile-poids">-</span></div>
+                                <div class="stat-item"><label>Taille</label><span id="profile-taille">-</span></div>
+                                <div class="stat-item"><label>Sexe</label><span id="profile-gender">-</span></div>
+                                <div class="stat-item"><label>Adresse</label><span id="profile-address">-</span></div>
+                                <div class="stat-item"><label>Ethnie</label><span id="profile-ethnie">-</span></div>
+                                <div class="stat-item"><label>Cheveux</label><span id="profile-hair">-</span></div>
+                                <div class="stat-item"><label>Yeux</label><span id="profile-eyes">-</span></div>
+                                <div class="stat-item"><label>Appartenance</label><span id="profile-appartenance">-</span></div>
+                                <div class="stat-item"><label>Emploi</label><span id="profile-job">-</span></div>
+                                <div class="stat-item"><label>Permis de conduire</label><span id="stat-permis">-</span></div>
+                                <div class="stat-item"><label>PPA Civil</label><span id="stat-ppa-civil">-</span></div>
+                                <div class="stat-item"><label>PPA Chasse</label><span id="stat-ppa-chasse">-</span></div>
+                                <div class="stat-item"><label>Décédé</label><span id="stat-decede">-</span></div>
+                                <div class="stat-item"><label>Wanted</label><span id="stat-wanted">-</span></div>
+                            </div>
+
+                            <div class="profile-actions-row mb-4">
+                                <button class="btn-action-small" onclick="openModal('modal-mandat')">Mandat</button>
+                                <button class="btn-action-small" onclick="openModal('modal-ticket')">Ticket routier</button>
+                                <button class="btn-action-small" id="btn-open-arrest-citizen">Rapport arrestation</button>
+                                <button class="btn-action-small" id="btn-open-plainte-citizen">Plainte</button>
+                            </div>
+
+                            <div class="profile-nav">
+                                <button class="tab-link active" data-tab="rapports">Rapports d'arrestation</button>
+                                <button class="tab-link" data-tab="tickets">Tickets routiers</button>
+                                <button class="tab-link" data-tab="mandats">Mandats d'arrêt</button>
+                                <button class="tab-link" data-tab="plaintes">Plaintes</button>
+                            </div>
+
+                            <div class="profile-content" id="profile-content-area"></div>
                         </div>
                     </div>
                 </div>
@@ -556,7 +553,6 @@
 
             </main>
         </div>
-    </div>
 
     <div class="modal-overlay hidden" id="modal-citizen-create">
         <div class="modal-container xl">
