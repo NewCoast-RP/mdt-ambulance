@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MDT - LSPD / SASP / DOJ / EMS</title>
+    <title>MDT - New Coast</title>
     <link rel="stylesheet" href="styles.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
@@ -42,8 +42,8 @@
             <div class="sidebar-header">
                 <img src="https://static.wikia.nocookie.net/morelife/images/7/7f/LSPD-logo.png/revision/latest?cb=20240305013722&path-prefix=fr" alt="SASP Logo" class="dept-logo">
                 <div class="dept-info">
-                    <h2>SASP</h2>
-                    <span>San Andreas State Police</span>
+                    <h2>LSPD</h2>
+                    <span>Los Santos Police Department</span>
                 </div>
             </div>
             
@@ -224,335 +224,336 @@
                         </div>
                     </div>
                 </div>
+            </div>
 
-                <div class="view-page" id="view-effectifs">
-                    <div class="panel h-full flex-col">
-                        <div class="panel-header" style="display: flex; justify-content: space-between; align-items: center;">
-                            <h3>Liste des effectifs</h3>
-                            <div class="search-container" style="width: 300px;">
-                                <i class="fa-solid fa-magnifying-glass"></i>
-                                <input type="text" id="search-effectifs-input" placeholder="Rechercher un agent...">
-                            </div>
-                        </div>
-                        <div class="panel-body no-pad flex-1" style="overflow-y: auto;">
-                            <div class="effectifs-list" id="effectifs-list-container" style="padding: 10px;"></div>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="view-page" id="view-poles">
-                    <div class="page-header" style="border-bottom: 1px solid var(--border-color); padding-bottom: 15px;">
-                        <h2>Pôles / spécialités</h2>
-                        <button class="btn-primary" id="btn-open-pole-modal">Ajouter un pôle</button>
-                    </div>
-                    <div id="poles-empty-state" class="text-muted mt-4 text-center hidden">Il n'y a aucun pôle de créé actuellement.</div>
-                    <div class="poles-grid mt-4" id="poles-container" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 20px;"></div>
-                </div>
-
-                <div class="view-page" id="view-rapports">
-                    <div class="citoyen-layout h-full">
-                        <div class="citoyen-sidebar">
-                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
-                                <h3 style="color:white; margin:0; font-size: 1.1rem;">Rapports d'opération</h3>
-                                <button class="btn-action-small" id="btn-open-op-report" style="padding: 6px 12px; background: var(--bg-hover);"><i class="fa-solid fa-plus"></i></button>
-                            </div>
-                            <div class="search-container w-full mb-3">
-                                <i class="fa-solid fa-magnifying-glass"></i>
-                                <input type="text" id="search-op-report-input" placeholder="Rechercher un rapport...">
-                            </div>
-                            <div class="citoyen-list" id="op-report-list-container"></div>
-                        </div>
-                        <div class="citoyen-main">
-                            <div class="citoyen-empty" id="op-report-empty-state"><p class="text-muted">Sélectionnez un rapport pour l'afficher.</p></div>
-                            <div class="profile-panel h-full flex-col hidden" id="op-report-details-state" style="padding: 25px; overflow-y: auto;"></div>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="view-page" id="view-armes">
-                    <div class="page-header">
-                        <h2>Registre des armes</h2>
-                        <button class="btn-primary" onclick="openModal('modal-arme-create')">Encoder une arme</button>
-                    </div>
-                    <div class="search-container mb-4">
-                        <i class="fa-solid fa-magnifying-glass"></i>
-                        <input type="text" id="search-arme-input" placeholder="Rechercher par modèle, série ou citoyen...">
-                    </div>
-                    <div class="table-container">
-                        <table class="mdt-table">
-                            <thead>
-                                <tr>
-                                    <th></th>
-                                    <th>DATE D'ENREGISTREMENT</th>
-                                    <th>N° DE SÉRIE</th>
-                                    <th>MODÈLE</th>
-                                    <th>STATUT</th>
-                                    <th>ACTIONS</th>
-                                </tr>
-                            </thead>
-                            <tbody id="armes-list-container"></tbody>
-                        </table>
-                    </div>
-                </div>
-
-                <div class="view-page" id="view-bracelets">
-                    <div class="page-header">
-                        <h2>Liste des bracelets électroniques</h2>
-                        <button class="btn-primary" onclick="openModal('modal-bracelet-create')">Encoder un bracelet</button>
-                    </div>
-                    <div class="search-container mb-4">
-                        <i class="fa-solid fa-magnifying-glass"></i>
-                        <input type="text" id="search-bracelet-input" placeholder="Rechercher un citoyen...">
-                    </div>
-                    <div class="table-container">
-                        <table class="mdt-table">
-                            <thead>
-                                <tr>
-                                    <th></th>
-                                    <th>CITOYEN</th>
-                                    <th>OFFICIER POSEUR</th>
-                                    <th>CODE NPRE</th>
-                                    <th>EXPIRE LE</th>
-                                    <th>ACTIONS</th>
-                                </tr>
-                            </thead>
-                            <tbody id="bracelets-list-container"></tbody>
-                        </table>
-                    </div>
-                </div>
-
-                <div class="view-page" id="view-vehicules">
-                    <div class="page-header">
-                        <h2>Registre des véhicules en infraction</h2>
-                        <button class="btn-primary" onclick="openModal('modal-vehicule-create')">Ajouter un véhicule</button>
-                    </div>
-                    <div class="search-container mb-4">
-                        <i class="fa-solid fa-magnifying-glass"></i>
-                        <input type="text" id="search-vehicule-input" placeholder="Rechercher une plaque...">
-                    </div>
-                    <div class="table-container">
-                        <table class="mdt-table">
-                            <thead>
-                                <tr>
-                                    <th></th>
-                                    <th>TYPE</th>
-                                    <th>PLAQUE</th>
-                                    <th>ENREGISTRÉ LE</th>
-                                    <th>FAITS</th>
-                                    <th>ACTIONS</th>
-                                </tr>
-                            </thead>
-                            <tbody id="vehicules-list-container"></tbody>
-                        </table>
-                    </div>
-                </div>
-
-                <div class="view-page" id="view-preuves">
-                    
-                    <div id="preuves-list-state" class="h-full flex-col">
-                        <div class="page-header">
-                            <h2>Dossiers photos / preuves</h2>
-                            <button class="btn-primary" onclick="openModal('modal-dossier-create')">Créer un dossier</button>
-                        </div>
-                        <div class="search-container mb-4">
+            <div class="view-page" id="view-effectifs">
+                <div class="panel h-full flex-col">
+                    <div class="panel-header" style="display: flex; justify-content: space-between; align-items: center;">
+                        <h3>Liste des effectifs</h3>
+                        <div class="search-container" style="width: 300px;">
                             <i class="fa-solid fa-magnifying-glass"></i>
-                            <input type="text" id="search-dossier-input" placeholder="Rechercher un dossier...">
-                        </div>
-                        <div class="dossiers-grid" id="dossiers-container" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 20px;">
-                            </div>
-                    </div>
-                    
-                    <div id="preuves-open-state" class="h-full flex-col hidden">
-                        <div class="page-header" style="border-bottom: 1px solid var(--border-color); padding-bottom: 15px;">
-                            <div>
-                                <h2 id="opened-dossier-title">Nom du dossier</h2>
-                                <p class="text-muted" id="opened-dossier-meta">Créé le ...</p>
-                            </div>
-                            <div style="display: flex; gap: 10px;">
-                                <button class="btn-secondary" id="btn-close-dossier">Retour</button>
-                            </div>
-                        </div>
-                        <div class="upload-box flex-1 mt-4 mb-4" id="dossier-upload-box" style="min-height: 150px; display: flex; flex-direction: column; align-items: center; justify-content: center;">
-                            <i class="fa-solid fa-image" style="font-size: 2rem; margin-bottom: 10px;"></i>
-                            <p>Coller une image (CTRL + V) pour l'ajouter au dossier</p>
-                        </div>
-                        <div id="opened-dossier-photos" style="display: flex; gap: 15px; flex-wrap: wrap; overflow-y: auto; padding: 10px 0;"></div>
-                    </div>
-
-                </div>
-
-                <div class="view-page" id="view-mes-interrogatoires">
-                    <div class="page-header">
-                        <h2>Mes interrogatoires</h2>
-                        <button class="btn-primary" onclick="openModal('modal-interrogatoire-create')">Créer un interrogatoire</button>
-                    </div>
-                    <div class="search-container mb-4">
-                        <i class="fa-solid fa-magnifying-glass"></i>
-                        <input type="text" id="search-mes-interrogatoires" placeholder="Rechercher un interrogatoire...">
-                    </div>
-                    <div class="table-container">
-                        <table class="mdt-table">
-                            <thead>
-                                <tr>
-                                    <th>NUMÉRO</th>
-                                    <th>DATE</th>
-                                    <th>NOM / PRÉNOM</th>
-                                    <th>ACTIONS</th>
-                                </tr>
-                            </thead>
-                            <tbody id="mes-interrogatoires-list"></tbody>
-                        </table>
-                    </div>
-                </div>
-
-                <div class="view-page" id="view-mes-plaintes">
-                    <div class="page-header">
-                        <h2>Mes plaintes</h2>
-                        <button class="btn-primary" onclick="openModal('modal-plainte-create')">Encoder une plainte</button>
-                    </div>
-                    <div class="search-container mb-4">
-                        <i class="fa-solid fa-magnifying-glass"></i>
-                        <input type="text" id="search-mes-plaintes" placeholder="Rechercher une plainte...">
-                    </div>
-                    <div class="table-container">
-                        <table class="mdt-table">
-                            <thead>
-                                <tr>
-                                    <th>NUMÉRO</th>
-                                    <th>DATE</th>
-                                    <th>CONTRE</th>
-                                    <th>RAISON</th>
-                                    <th>ACTIONS</th>
-                                </tr>
-                            </thead>
-                            <tbody id="mes-plaintes-list"></tbody>
-                        </table>
-                    </div>
-                </div>
-
-                <div class="view-page" id="view-mes-incidents">
-                    <div class="page-header">
-                        <h2>Mes rapports d'incident</h2>
-                        <button class="btn-primary" onclick="openModal('modal-incident-create')">Créer un rapport d'incident</button>
-                    </div>
-                    <div class="search-container mb-4">
-                        <i class="fa-solid fa-magnifying-glass"></i>
-                        <input type="text" id="search-mes-incidents" placeholder="Rechercher un rapport...">
-                    </div>
-                    <div class="table-container">
-                        <table class="mdt-table">
-                            <thead>
-                                <tr>
-                                    <th>NUMÉRO</th>
-                                    <th>DATE</th>
-                                    <th>TITRE DE L'INCIDENT</th>
-                                    <th>ACTIONS</th>
-                                </tr>
-                            </thead>
-                            <tbody id="mes-incidents-list"></tbody>
-                        </table>
-                    </div>
-                </div>
-
-                <div class="view-page" id="view-sup-plaintes">
-                    <div class="page-header">
-                        <h2>Liste globale des plaintes</h2>
-                    </div>
-                    <div class="search-container mb-4">
-                        <i class="fa-solid fa-magnifying-glass"></i>
-                        <input type="text" id="search-sup-plaintes" placeholder="Rechercher une plainte...">
-                    </div>
-                    <div class="table-container">
-                        <table class="mdt-table">
-                            <thead>
-                                <tr>
-                                    <th>NUMÉRO</th>
-                                    <th>DATE</th>
-                                    <th>CONTRE</th>
-                                    <th>RAISON</th>
-                                    <th>OFFICIER</th>
-                                    <th>ACTIONS</th>
-                                </tr>
-                            </thead>
-                            <tbody id="sup-plaintes-list"></tbody>
-                        </table>
-                    </div>
-                </div>
-
-                <div class="view-page" id="view-sup-interrogatoires">
-                    <div class="page-header">
-                        <h2>Liste globale des interrogatoires</h2>
-                    </div>
-                    <div class="search-container mb-4">
-                        <i class="fa-solid fa-magnifying-glass"></i>
-                        <input type="text" id="search-sup-interrogatoires" placeholder="Rechercher...">
-                    </div>
-                    <div class="table-container">
-                        <table class="mdt-table">
-                            <thead>
-                                <tr>
-                                    <th>NUMÉRO</th>
-                                    <th>DATE</th>
-                                    <th>CITOYEN INTERROGÉ</th>
-                                    <th>OFFICIER</th>
-                                    <th>ACTIONS</th>
-                                </tr>
-                            </thead>
-                            <tbody id="sup-interrogatoires-list"></tbody>
-                        </table>
-                    </div>
-                </div>
-
-                <div class="view-page" id="view-sup-incidents">
-                    <div class="page-header">
-                        <h2>Liste globale des rapports d'incident</h2>
-                    </div>
-                    <div class="search-container mb-4">
-                        <i class="fa-solid fa-magnifying-glass"></i>
-                        <input type="text" id="search-sup-incidents" placeholder="Rechercher...">
-                    </div>
-                    <div class="table-container">
-                        <table class="mdt-table">
-                            <thead>
-                                <tr>
-                                    <th>NUMÉRO</th>
-                                    <th>DATE</th>
-                                    <th>TITRE</th>
-                                    <th>OFFICIER</th>
-                                    <th>ACTIONS</th>
-                                </tr>
-                            </thead>
-                            <tbody id="sup-incidents-list"></tbody>
-                        </table>
-                    </div>
-                </div>
-
-                <div class="view-page" id="view-statistiques">
-                    <div class="citoyen-layout h-full">
-                        <div class="citoyen-sidebar">
-                            <div class="search-container w-full mb-3">
-                                <i class="fa-solid fa-magnifying-glass"></i>
-                                <input type="text" id="search-stats-agent" placeholder="Rechercher un agent...">
-                            </div>
-                            <div class="citoyen-list" id="stats-agents-list"></div>
-                        </div>
-                        <div class="citoyen-main">
-                            <div class="citoyen-empty" id="stats-empty-state">
-                                <p class="text-muted">Sélectionnez un agent pour voir ses statistiques.</p>
-                            </div>
-                            <div class="profile-panel h-full flex-col hidden" id="stats-details-state" style="overflow-y: auto;">
-                                <h2 id="stat-agent-name" class="mb-1" style="font-size: 1.8rem;">NOM DE L'AGENT</h2>
-                                <p class="text-muted mb-4" id="stat-agent-grade" style="font-size: 0.9rem;">GRADE</p>
-                                
-                                <div class="admin-stats-grid" style="grid-template-columns: repeat(3, 1fr);" id="stat-agent-grid">
-                                    </div>
-                            </div>
+                            <input type="text" id="search-effectifs-input" placeholder="Rechercher un agent...">
                         </div>
                     </div>
+                    <div class="panel-body no-pad flex-1" style="overflow-y: auto;">
+                        <div class="effectifs-list" id="effectifs-list-container" style="padding: 10px;"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="view-page" id="view-poles">
+                <div class="page-header" style="border-bottom: 1px solid var(--border-color); padding-bottom: 15px;">
+                    <h2>Pôles / spécialités</h2>
+                    <button class="btn-primary" id="btn-open-pole-modal">Ajouter un pôle</button>
+                </div>
+                <div id="poles-empty-state" class="text-muted mt-4 text-center hidden">Il n'y a aucun pôle de créé actuellement.</div>
+                <div class="poles-grid mt-4" id="poles-container" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 20px;"></div>
+            </div>
+
+            <div class="view-page" id="view-rapports">
+                <div class="citoyen-layout h-full">
+                    <div class="citoyen-sidebar">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                            <h3 style="color:white; margin:0; font-size: 1.1rem;">Rapports d'opération</h3>
+                            <button class="btn-action-small" id="btn-open-op-report" style="padding: 6px 12px; background: var(--bg-hover);"><i class="fa-solid fa-plus"></i></button>
+                        </div>
+                        <div class="search-container w-full mb-3">
+                            <i class="fa-solid fa-magnifying-glass"></i>
+                            <input type="text" id="search-op-report-input" placeholder="Rechercher un rapport...">
+                        </div>
+                        <div class="citoyen-list" id="op-report-list-container"></div>
+                    </div>
+                    <div class="citoyen-main">
+                        <div class="citoyen-empty" id="op-report-empty-state"><p class="text-muted">Sélectionnez un rapport pour l'afficher.</p></div>
+                        <div class="profile-panel h-full flex-col hidden" id="op-report-details-state" style="padding: 25px; overflow-y: auto;"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="view-page" id="view-armes">
+                <div class="page-header">
+                    <h2>Registre des armes</h2>
+                    <button class="btn-primary" onclick="openModal('modal-arme-create')">Encoder une arme</button>
+                </div>
+                <div class="search-container mb-4">
+                    <i class="fa-solid fa-magnifying-glass"></i>
+                    <input type="text" id="search-arme-input" placeholder="Rechercher par modèle, série ou citoyen...">
+                </div>
+                <div class="table-container">
+                    <table class="mdt-table">
+                        <thead>
+                            <tr>
+                                <th></th>
+                                <th>DATE D'ENREGISTREMENT</th>
+                                <th>N° DE SÉRIE</th>
+                                <th>MODÈLE</th>
+                                <th>STATUT</th>
+                                <th>ACTIONS</th>
+                            </tr>
+                        </thead>
+                        <tbody id="armes-list-container"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="view-page" id="view-bracelets">
+                <div class="page-header">
+                    <h2>Liste des bracelets électroniques</h2>
+                    <button class="btn-primary" onclick="openModal('modal-bracelet-create')">Encoder un bracelet</button>
+                </div>
+                <div class="search-container mb-4">
+                    <i class="fa-solid fa-magnifying-glass"></i>
+                    <input type="text" id="search-bracelet-input" placeholder="Rechercher un citoyen...">
+                </div>
+                <div class="table-container">
+                    <table class="mdt-table">
+                        <thead>
+                            <tr>
+                                <th></th>
+                                <th>CITOYEN</th>
+                                <th>OFFICIER POSEUR</th>
+                                <th>CODE NPRE</th>
+                                <th>EXPIRE LE</th>
+                                <th>ACTIONS</th>
+                            </tr>
+                        </thead>
+                        <tbody id="bracelets-list-container"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="view-page" id="view-vehicules">
+                <div class="page-header">
+                    <h2>Registre des véhicules en infraction</h2>
+                    <button class="btn-primary" onclick="openModal('modal-vehicule-create')">Ajouter un véhicule</button>
+                </div>
+                <div class="search-container mb-4">
+                    <i class="fa-solid fa-magnifying-glass"></i>
+                    <input type="text" id="search-vehicule-input" placeholder="Rechercher une plaque...">
+                </div>
+                <div class="table-container">
+                    <table class="mdt-table">
+                        <thead>
+                            <tr>
+                                <th></th>
+                                <th>TYPE</th>
+                                <th>PLAQUE</th>
+                                <th>ENREGISTRÉ LE</th>
+                                <th>FAITS</th>
+                                <th>ACTIONS</th>
+                            </tr>
+                        </thead>
+                        <tbody id="vehicules-list-container"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="view-page" id="view-preuves">
+                
+                <div id="preuves-list-state" class="h-full flex-col">
+                    <div class="page-header">
+                        <h2>Dossiers photos / preuves</h2>
+                        <button class="btn-primary" onclick="openModal('modal-dossier-create')">Créer un dossier</button>
+                    </div>
+                    <div class="search-container mb-4">
+                        <i class="fa-solid fa-magnifying-glass"></i>
+                        <input type="text" id="search-dossier-input" placeholder="Rechercher un dossier...">
+                    </div>
+                    <div class="dossiers-grid" id="dossiers-container" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 20px;">
+                        </div>
+                </div>
+                
+                <div id="preuves-open-state" class="h-full flex-col hidden">
+                    <div class="page-header" style="border-bottom: 1px solid var(--border-color); padding-bottom: 15px;">
+                        <div>
+                            <h2 id="opened-dossier-title">Nom du dossier</h2>
+                            <p class="text-muted" id="opened-dossier-meta">Créé le ...</p>
+                        </div>
+                        <div style="display: flex; gap: 10px;">
+                            <button class="btn-secondary" id="btn-close-dossier">Retour</button>
+                        </div>
+                    </div>
+                    <div class="upload-box flex-1 mt-4 mb-4" id="dossier-upload-box" style="min-height: 150px; display: flex; flex-direction: column; align-items: center; justify-content: center;">
+                        <i class="fa-solid fa-image" style="font-size: 2rem; margin-bottom: 10px;"></i>
+                        <p>Coller une image (CTRL + V) pour l'ajouter au dossier</p>
+                    </div>
+                    <div id="opened-dossier-photos" style="display: flex; gap: 15px; flex-wrap: wrap; overflow-y: auto; padding: 10px 0;"></div>
                 </div>
 
-            </main>
-        </div>
+            </div>
+
+            <div class="view-page" id="view-mes-interrogatoires">
+                <div class="page-header">
+                    <h2>Mes interrogatoires</h2>
+                    <button class="btn-primary" onclick="openModal('modal-interrogatoire-create')">Créer un interrogatoire</button>
+                </div>
+                <div class="search-container mb-4">
+                    <i class="fa-solid fa-magnifying-glass"></i>
+                    <input type="text" id="search-mes-interrogatoires" placeholder="Rechercher un interrogatoire...">
+                </div>
+                <div class="table-container">
+                    <table class="mdt-table">
+                        <thead>
+                            <tr>
+                                <th>NUMÉRO</th>
+                                <th>DATE</th>
+                                <th>NOM / PRÉNOM</th>
+                                <th>ACTIONS</th>
+                            </tr>
+                        </thead>
+                        <tbody id="mes-interrogatoires-list"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="view-page" id="view-mes-plaintes">
+                <div class="page-header">
+                    <h2>Mes plaintes</h2>
+                    <button class="btn-primary" onclick="openModal('modal-plainte-create')">Encoder une plainte</button>
+                </div>
+                <div class="search-container mb-4">
+                    <i class="fa-solid fa-magnifying-glass"></i>
+                    <input type="text" id="search-mes-plaintes" placeholder="Rechercher une plainte...">
+                </div>
+                <div class="table-container">
+                    <table class="mdt-table">
+                        <thead>
+                            <tr>
+                                <th>NUMÉRO</th>
+                                <th>DATE</th>
+                                <th>CONTRE</th>
+                                <th>RAISON</th>
+                                <th>ACTIONS</th>
+                            </tr>
+                        </thead>
+                        <tbody id="mes-plaintes-list"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="view-page" id="view-mes-incidents">
+                <div class="page-header">
+                    <h2>Mes rapports d'incident</h2>
+                    <button class="btn-primary" onclick="openModal('modal-incident-create')">Créer un rapport d'incident</button>
+                </div>
+                <div class="search-container mb-4">
+                    <i class="fa-solid fa-magnifying-glass"></i>
+                    <input type="text" id="search-mes-incidents" placeholder="Rechercher un rapport...">
+                </div>
+                <div class="table-container">
+                    <table class="mdt-table">
+                        <thead>
+                            <tr>
+                                <th>NUMÉRO</th>
+                                <th>DATE</th>
+                                <th>TITRE DE L'INCIDENT</th>
+                                <th>ACTIONS</th>
+                            </tr>
+                        </thead>
+                        <tbody id="mes-incidents-list"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="view-page" id="view-sup-plaintes">
+                <div class="page-header">
+                    <h2>Liste globale des plaintes</h2>
+                </div>
+                <div class="search-container mb-4">
+                    <i class="fa-solid fa-magnifying-glass"></i>
+                    <input type="text" id="search-sup-plaintes" placeholder="Rechercher une plainte...">
+                </div>
+                <div class="table-container">
+                    <table class="mdt-table">
+                        <thead>
+                            <tr>
+                                <th>NUMÉRO</th>
+                                <th>DATE</th>
+                                <th>CONTRE</th>
+                                <th>RAISON</th>
+                                <th>OFFICIER</th>
+                                <th>ACTIONS</th>
+                            </tr>
+                        </thead>
+                        <tbody id="sup-plaintes-list"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="view-page" id="view-sup-interrogatoires">
+                <div class="page-header">
+                    <h2>Liste globale des interrogatoires</h2>
+                </div>
+                <div class="search-container mb-4">
+                    <i class="fa-solid fa-magnifying-glass"></i>
+                    <input type="text" id="search-sup-interrogatoires" placeholder="Rechercher...">
+                </div>
+                <div class="table-container">
+                    <table class="mdt-table">
+                        <thead>
+                            <tr>
+                                <th>NUMÉRO</th>
+                                <th>DATE</th>
+                                <th>CITOYEN INTERROGÉ</th>
+                                <th>OFFICIER</th>
+                                <th>ACTIONS</th>
+                            </tr>
+                        </thead>
+                        <tbody id="sup-interrogatoires-list"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="view-page" id="view-sup-incidents">
+                <div class="page-header">
+                    <h2>Liste globale des rapports d'incident</h2>
+                </div>
+                <div class="search-container mb-4">
+                    <i class="fa-solid fa-magnifying-glass"></i>
+                    <input type="text" id="search-sup-incidents" placeholder="Rechercher...">
+                </div>
+                <div class="table-container">
+                    <table class="mdt-table">
+                        <thead>
+                            <tr>
+                                <th>NUMÉRO</th>
+                                <th>DATE</th>
+                                <th>TITRE</th>
+                                <th>OFFICIER</th>
+                                <th>ACTIONS</th>
+                            </tr>
+                        </thead>
+                        <tbody id="sup-incidents-list"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="view-page" id="view-statistiques">
+                <div class="citoyen-layout h-full">
+                    <div class="citoyen-sidebar">
+                        <div class="search-container w-full mb-3">
+                            <i class="fa-solid fa-magnifying-glass"></i>
+                            <input type="text" id="search-stats-agent" placeholder="Rechercher un agent...">
+                        </div>
+                        <div class="citoyen-list" id="stats-agents-list"></div>
+                    </div>
+                    <div class="citoyen-main">
+                        <div class="citoyen-empty" id="stats-empty-state">
+                            <p class="text-muted">Sélectionnez un agent pour voir ses statistiques.</p>
+                        </div>
+                        <div class="profile-panel h-full flex-col hidden" id="stats-details-state" style="overflow-y: auto;">
+                            <h2 id="stat-agent-name" class="mb-1" style="font-size: 1.8rem;">NOM DE L'AGENT</h2>
+                            <p class="text-muted mb-4" id="stat-agent-grade" style="font-size: 0.9rem;">GRADE</p>
+                            
+                            <div class="admin-stats-grid" style="grid-template-columns: repeat(3, 1fr);" id="stat-agent-grid">
+                                </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </main>
+    </div>
 
     <div class="modal-overlay hidden" id="modal-citizen-create">
         <div class="modal-container xl">

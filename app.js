@@ -1,9 +1,3 @@
-/**
- * ============================================================================
- * MDT - LSPD / SASP / DOJ - SCRIPT PRINCIPAL & BASE DE DONNÉES SUPABASE
- * ============================================================================
- */
-
 document.addEventListener('DOMContentLoaded', () => {
 
     // ========================================================================
@@ -41,7 +35,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 console.log("Base de données vide, création des données par défaut...");
                 this.data.effectifs = [
                     { firstname: "John", lastname: "Doe", grade: "Officier II", matricule: "45", iban: "LS-112233", birthdate: "05/08/1995" },
-                    { firstname: "DEV", lastname: "Photon", grade: "Capitaine SASP", matricule: "21", iban: "LS-998877", birthdate: "12/01/2000" }
+                    { firstname: "DEV", lastname: "Photon", grade: "Capitaine LSPD", matricule: "21", iban: "LS-998877", birthdate: "12/01/2000" }
                 ];
                 this.sync(); 
             }
@@ -77,7 +71,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
     // ========================================================================
-    // 1. SYSTÈME DE CONNEXION & UTILISATEURS (AJOUT DES 5 SUPERVISEURS)
+    // 1. SYSTÈME DE CONNEXION & UTILISATEURS
     // ========================================================================
     const loginScreen = document.getElementById('login-screen');
     const mdtApp = document.getElementById('mdt-app');
@@ -89,15 +83,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const mdtUsers = {
         'officier': { pwd: 'mdp', name: 'John Doe', grade: 'Officier II', matricule: '45', permissions: ['general', 'registres', 'preuves', 'mes_dossiers'] },
-        
-        // --- LES 5 NOUVEAUX COMPTES SUPERVISEURS (ACCÈS TOTAL) ---
         'chef': { pwd: 'mdp1', name: 'Leon Kennedy', grade: 'Chef de la Police', matricule: '01', permissions: ['general', 'registres', 'preuves', 'mes_dossiers', 'superviseur'] },
         'commandant': { pwd: 'mdp2', name: 'Sarah Connor', grade: 'Commandant', matricule: '02', permissions: ['general', 'registres', 'preuves', 'mes_dossiers', 'superviseur'] },
         'capitaine': { pwd: 'mdp3', name: 'David Anderson', grade: 'Capitaine', matricule: '15', permissions: ['general', 'registres', 'preuves', 'mes_dossiers', 'superviseur'] },
         'lieutenant': { pwd: 'mdp4', name: 'Olivia Benson', grade: 'Lieutenant', matricule: '22', permissions: ['general', 'registres', 'preuves', 'mes_dossiers', 'superviseur'] },
         'sergent': { pwd: 'mdp5', name: 'Hank Voight', grade: 'Sergent-Chef', matricule: '33', permissions: ['general', 'registres', 'preuves', 'mes_dossiers', 'superviseur'] },
-        
-        'superviseur': { pwd: 'mdp', name: 'DEV Photon', grade: 'Capitaine SASP', matricule: '21', permissions: ['general', 'registres', 'preuves', 'mes_dossiers', 'superviseur'] }
+        'superviseur': { pwd: 'mdp', name: 'DEV Photon', grade: 'Capitaine LSPD', matricule: '21', permissions: ['general', 'registres', 'preuves', 'mes_dossiers', 'superviseur'] }
     };
 
     let currentUserProfile = null;
@@ -282,7 +273,7 @@ document.addEventListener('DOMContentLoaded', () => {
             renderSupInterrogatoires(valSupInt);
             renderSupIncidents(valSupInc);
             renderAgentStatsList(valStats);
-            renderSupArrestations(); // Les arrestations
+            renderSupArrestations(); 
         }
     }
 
@@ -1797,6 +1788,7 @@ document.addEventListener('DOMContentLoaded', () => {
             `;
         });
 
+        // Afficher les statistiques de l'agent sélectionné
         container.querySelectorAll('.citoyen-list-item').forEach(item => {
             item.addEventListener('click', () => {
                 document.querySelectorAll('#stats-agents-list .citoyen-list-item').forEach(i => {
@@ -1827,6 +1819,7 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('stat-agent-name').textContent = fullName;
         document.getElementById('stat-agent-grade').textContent = agent.grade;
 
+        // Récupération de la donnée avec sécurité pour éviter les plantages
         const citoyens = MDT_Database.data.citoyens || [];
         const plaintes = MDT_Database.data.plaintes || [];
         const opReports = MDT_Database.data.opReports || [];
@@ -1836,6 +1829,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const vehicules = MDT_Database.data.vehicules || [];
         const bracelets = MDT_Database.data.bracelets || [];
 
+        // Sécurisation de toutes les requêtes (|| '') évite l'erreur "includes of undefined"
         let stats = {
             mandat: 0, 
             ticket: 0, 
@@ -1849,6 +1843,7 @@ document.addEventListener('DOMContentLoaded', () => {
             bracelet: bracelets.filter(b => (b.officier || '').includes(lastName)).length
         };
 
+        // Fouiller dans chaque citoyen pour compter les mandats, tickets, arrestations
         citoyens.forEach(c => {
             if (c.mandats) {
                 stats.mandat += c.mandats.filter(m => (m.officiers || '').includes(lastName)).length;
@@ -1864,6 +1859,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const grid = document.getElementById('stat-agent-grid');
         grid.innerHTML = '';
         
+        // Fonction pour générer une carte de stat
         const buildCard = (label, value) => {
             return `<div class="admin-stat-card">
                         <h3>${label}</h3>
@@ -1890,6 +1886,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const uploadBoxes = document.querySelectorAll('.upload-box');
     
     uploadBoxes.forEach(box => {
+        // Rend la zone cliquable et capable de recevoir le focus pour CTRL+V
         box.setAttribute('tabindex', '0'); 
         
         box.addEventListener('click', () => {
@@ -1909,6 +1906,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         const imgData = event.target.result;
                         const imgHTML = `<img src="${imgData}" style="width:70px; height:70px; object-fit:cover; border-radius:4px; border:2px solid var(--accent-primary);">`;
                         
+                        // Répartit l'image selon la boîte active
                         if (box.id === 'op-upload-box') { 
                             currentOpReportImages.push(imgData);
                             document.getElementById('op-photos-container').innerHTML += imgHTML;
@@ -1955,21 +1953,27 @@ document.addEventListener('DOMContentLoaded', () => {
     // 14. FONCTIONS UTILITAIRES (MODALES ET CLICS GLOBAUX)
     // ========================================================================
     
+    // Fonction d'ouverture d'une modale
     window.openModal = function(modalId) {
         const modal = document.getElementById(modalId);
-        if (modal) modal.classList.remove('hidden');
+        if (modal) {
+            modal.classList.remove('hidden');
+        }
     }
 
+    // Fonction de fermeture de toutes les modales
     window.closeModals = function() {
         document.querySelectorAll('.modal-overlay').forEach(modal => {
             modal.classList.add('hidden');
         });
         
+        // Ferme également tous les menus contextuels (les 3 petits points)
         document.querySelectorAll('.context-menu').forEach(menu => {
             menu.classList.add('hidden');
         });
     }
 
+    // Fonction pour activer l'ouverture des lignes de tableaux (Flèche)
     function setupExpandableRows(container) {
         container.querySelectorAll('.expandable-row').forEach(row => {
             row.addEventListener('click', () => {
@@ -1988,11 +1992,14 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    // Gestion globale des clics sur la page
     document.addEventListener('click', (e) => {
+        // Clic sur l'overlay sombre = ferme la modale
         if (e.target.classList.contains('modal-overlay')) {
             closeModals();
         }
         
+        // Ferme les menus contextuels si on clique à l'extérieur
         const isClickInsideMenuOption = (
             e.target.closest('.pole-options') || 
             e.target.closest('.op-list-options') || 
@@ -2008,7 +2015,9 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
+    // Gestion des touches du clavier
     document.addEventListener('keydown', (e) => {
+        // Touche Echap = ferme la modale
         if (e.key === 'Escape') {
             closeModals();
         }
